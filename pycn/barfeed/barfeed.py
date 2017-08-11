@@ -101,6 +101,7 @@ class GetBarThread(PollingThread, HuobiWebSocket):
         self.__apiCallDelay = apiCallDelay
 
         self.__updateNextBarClose()
+        self.__lastTime = None
 
     def __updateNextBarClose(self):
         self.__nextBarClose = resamplebase.build_range(utcnow(), self.__frequency).getEnding()
@@ -111,6 +112,9 @@ class GetBarThread(PollingThread, HuobiWebSocket):
     def onKline(self, timestamp, msg):
         time.localtime(int(timestamp))
         msg['time'] = time.strftime("%Y-%m-%d %H:%M:%S")
+        if self.__lastTime == msg['time']:
+            return
+        self.__lastTime = msg['time']
         barDict = {}
         for indentifier in self.__identifiers:
                 barDict[indentifier] = build_bar(msg, self.__frequency)
