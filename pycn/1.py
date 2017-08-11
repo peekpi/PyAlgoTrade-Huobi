@@ -1,19 +1,18 @@
 from pyalgotrade import strategy
 from pyalgotrade import broker
 from pyalgotrade.bar import Frequency
-from pyalgotrade.barfeed.csvfeed import GenericBarFeed
 from pyalgotrade.technical import ma
 from pyalgotrade.technical import cross
 from pyalgotrade import plotter
 from pyalgotrade.stratanalyzer import returns
+from barfeed.barfeed import LiveFeed
 
-class MyStrategy(strategy.BacktestingStrategy):
+class MyStrategy(strategy.BaseStrategy):
     def __init__(self, feed, instrument, brk):
         super(MyStrategy, self).__init__(feed, brk)
         self.__position = None
         self.__instrument = instrument
         # We'll use adjusted close values instead of regular close values.
-        self.setUseAdjustedValues(True)
         self.__prices = feed[instrument].getPriceDataSeries()
         self.__sma = {}
         self.__sma[60] = ma.SMA(self.__prices, 60)
@@ -41,6 +40,9 @@ class MyStrategy(strategy.BacktestingStrategy):
 
     def onBars(self, bars):
         # Wait for enough bars to be available to calculate a SMA.
+        print("new onBars!")
+        bar = bars[self.__instrument]
+        print("close:%.2f"%bar.getPrice())
         if self.__sma[30][-1] is None:
             return
 
@@ -60,14 +62,13 @@ class MyStrategy(strategy.BacktestingStrategy):
 
 def run_strategy():
     # Load the yahoo feed from the CSV file
-    feed = GenericBarFeed(Frequency.DAY, None, None)
-    feed.addBarsFromCSV("orcl", "2000.csv")
+    feed = LiveFeed(["ltc"], Frequency.MINUTE*5, 30)
 
     # commission
     broker_commission = broker.backtesting.TradePercentage(0.002)
     broker_brk = broker.backtesting.Broker(20000, feed, broker_commission)
     # Evaluate the strategy with the feed.
-    myStrategy = MyStrategy(feed, "orcl", broker_brk)
+    myStrategy = MyStrategy(feed, "ltc", broker_brk)
     
     returnsAnalyzer = returns.Returns()
     myStrategy.attachAnalyzer(returnsAnalyzer)
