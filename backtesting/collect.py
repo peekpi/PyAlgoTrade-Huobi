@@ -7,10 +7,15 @@ import pandas
 import json
 import urllib2
 
-def getHuobiData(type, period, length):
+g_coinType=["ltc","btc"]
+g_period=["001","005","015","030","060","100","200","300","400"]
+def TypePeriodGen():
+    return ((c,p) for c in g_coinType for p in g_period)
+
+def getHuobiData(coinType, period, length):
     """返回list格式数据
     """
-    url ="http://api.huobi.com/staticmarket/"+type+"_kline_"+period+"_json.js?length="+length 
+    url ="http://api.huobi.com/staticmarket/%s_kline_%s_json.js?length=%d"%(coinType, period, length) 
     print(url)
     fstr=urllib2.urlopen(url).read()
     jlist=json.loads(fstr)
@@ -18,16 +23,16 @@ def getHuobiData(type, period, length):
     jlist.pop()
     return jlist 
 
-def getCvs(type,period,length):
+def getCvs(coinType,period,length):
     """生成CVS文件
     """
-    jlist=getHuobiData(type, period, length)
+    jlist=getHuobiData(coinType, period, length)
     f=lambda x:x[0:4]+"-"+x[4:6]+"-"+x[6:8]+" "+x[8:10]+":"+x[10:12]+":"+x[12:14]
 
     for x in jlist:
         x[0] = f(x[0])
     df = pandas.DataFrame.from_dict(jlist)
-    filename = "%s_%s.csv" % (type, period)
+    filename = "%s_%s.csv" % (coinType, period)
     df.to_csv(filename,index=False, header=["Date Time","Open","High","Low","Close","Volume"])
     return filename
 
@@ -49,27 +54,8 @@ def getLastDataFromCvs(fileName):
 def initCsv():
     """初始化可以拿到的最老数据
     """
-    getCvs("btc","001","2000")
-    getCvs("btc","005","2000")
-    getCvs("btc","015","2000")
-    getCvs("btc","030","2000")
-    getCvs("btc","060","2000")
-    getCvs("btc","100","2000")
-    getCvs("btc","200","2000")
-    getCvs("btc","300","2000")
-    getCvs("btc","400","2000")
-
-    getCvs("ltc","001","2000")
-    getCvs("ltc","005","2000")
-    getCvs("ltc","015","2000")
-    getCvs("ltc","030","2000")
-    getCvs("ltc","060","2000")
-    getCvs("ltc","100","2000")
-    getCvs("ltc","200","2000")
-    getCvs("ltc","300","2000")
-    getCvs("ltc","400","2000")
-    pass
-
+    map(lambda x:getCvs(x[0], x[1], 2000), TypePeriodGen())
+    
 def dataToStr(list):
     """废弃 用join函数可替代
     """
@@ -79,13 +65,13 @@ def dataToStr(list):
     return line[:-1] 
 
 
-def updateCsv(cointype, period, length):
+def updateCsv(coincoinType, period, length):
     """更新单个csv文件
     按需求获取k线数据后与本地cvs对比并更新
     """
 
-    jlist = getHuobiData(cointype, period, length)
-    filename = "%s_%s.csv" % (cointype, period)
+    jlist = getHuobiData(coincoinType, period, length)
+    filename = "%s_%s.csv" % (coincoinType, period)
     lastline = getLastDataFromCvs(filename)
     #废弃 lastDateTime = lastline.split(",")[0].replace("-","").replace(":","").replace(" ","")
     #初始化的时候把api提供的参数截掉了后三位，待会过滤的时候还要用
@@ -112,26 +98,8 @@ def updateCsv(cointype, period, length):
 def updateAllCsv():
     """更新所有的cvs文件
     """
-    updateCsv("btc","001","2000")
-    updateCsv("btc","005","2000")
-    updateCsv("btc","015","2000")
-    updateCsv("btc","030","2000")
-    updateCsv("btc","060","2000")
-    updateCsv("btc","100","2000")
-    updateCsv("btc","200","2000")
-    updateCsv("btc","300","2000")
-    updateCsv("btc","400","2000")
-    updateCsv("ltc","001","2000")
-    updateCsv("ltc","005","2000")
-    updateCsv("ltc","015","2000")
-    updateCsv("ltc","030","2000")
-    updateCsv("ltc","060","2000")
-    updateCsv("ltc","100","2000")
-    updateCsv("ltc","200","2000")
-    updateCsv("ltc","300","2000")
-    updateCsv("ltc","400","2000")
-    pass
-    
+    map(lambda x:updateCsv(x[0], x[1], 2000), TypePeriodGen())
+   
 #第一次跑要先初始化数据
-#initCsv()
+initCsv()
 updateAllCsv()
