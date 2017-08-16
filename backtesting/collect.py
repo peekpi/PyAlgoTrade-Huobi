@@ -6,6 +6,8 @@
 import pandas
 import json
 import urllib2
+import time
+import os
 
 g_coinType=["ltc","btc"]
 g_period=["001","005","015","030","060","100","200","300","400"]
@@ -95,11 +97,21 @@ def updateCsv(coincoinType, period, length):
     pass
 
 
-def updateAllCsv():
+def updateAllCsv(length):
     """更新所有的cvs文件
+    length最长为2000
     """
-    map(lambda x:updateCsv(x[0], x[1], 2000), TypePeriodGen())
+    map(lambda x:updateCsv(x[0], x[1], length), TypePeriodGen())
    
+def getTime():
+    return time.strftime('%Y-%m-%d %X',time.localtime())
+
 #第一次跑要先初始化数据
-initCsv()
-updateAllCsv()
+if 'btc_001.csv' not in os.listdir('.'):
+    initCsv()
+while True:
+    print "%s 开始更新" % getTime()
+    updateAllCsv(50)
+    minutes=30
+    print "%s 更新完毕 %s分钟后再次更新" % (getTime(),minutes)
+    time.sleep(60 * minutes)
