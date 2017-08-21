@@ -125,7 +125,11 @@ class GetBarThread(PollingThread, HuobiWebSocket):
 
 
     def doCall(self):
-        self.startClient()
+        while True:
+            print('--client start')
+            self.connect();
+            self.startClient()
+            print("---------doCall end")
         '''
         endDateTime = self.__nextBarClose
         self.__updateNextBarClose()

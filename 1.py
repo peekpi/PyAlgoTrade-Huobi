@@ -51,6 +51,7 @@ class MyStrategy(strategy.BacktestingStrategy):
                 mbroker = self.getBroker();
                 shares = mbroker.getCash()/bar.getPrice()*0.9;
 #                self.__position = self.marketOrder(self.__instrument, self.__shares)
+                print("buy%.2f in %.2f use %d"%(shares, bar.getPrice(), mbroker.getCash()))
                 self.__position = self.enterLong(self.__instrument, shares, True)
         # Check if we have to exit the position.
 #        elif not self.__position.exitActive() and cross.cross_below(self.__prices, self.__sma[10]) > 0:
@@ -65,7 +66,7 @@ def run_strategy():
 
     # commission
     broker_commission = broker.backtesting.TradePercentage(0.002)
-    broker_brk = broker.backtesting.Broker(20000, feed, broker_commission)
+    broker_brk = broker.backtesting.Broker(200000, feed, broker_commission)
     # Evaluate the strategy with the feed.
     myStrategy = MyStrategy(feed, "orcl", broker_brk)
     
@@ -84,7 +85,7 @@ def run_strategy():
     
     
     myStrategy.run()
-    print "Final portfolio value: $%.2f" % myStrategy.getBroker().getEquity()
+    print("Final portfolio value: $%.2f" % myStrategy.getBroker().getEquity())
 #    myStrategy.info("Final portfolio value: $%.2f" % myStrategy.getResult())
 
     # Plot the strategy.

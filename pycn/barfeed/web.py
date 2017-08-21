@@ -8,7 +8,6 @@ from pyalgotrade.websocket.client import WebSocketClientBase
 class HuobiWebSocket(WebSocketClientBase):
     def __init__(self, url):
         super(HuobiWebSocket, self).__init__(url)
-        self.connect();
     def received_message(self, message):
         buf = StringIO(message.data)
         message.data = gzip.GzipFile(fileobj=buf).read()
@@ -28,6 +27,13 @@ class HuobiWebSocket(WebSocketClientBase):
     def onOpened(self):
         print("Opend!")
         self.subscribe(1,2)
+    def onClosed(self, msg, reason):
+        print("onClosed msg:%s reason:%s"%(msg, reason))
+    def onUnhandledException(self, exception):
+        print("onExcepetion:"%(exception))
+
+    def onDisconnectionDetected(self):
+        print("onDisconnectionDetected")
 
     def subscribe(self, symbol, period):
         msg = { 
