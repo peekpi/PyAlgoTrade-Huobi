@@ -20,19 +20,13 @@
 from Util import *
 import HuobiService as hapi
 
-import time
-import datetime
-import hmac
-import hashlib
-import requests
-import threading
+from datetime import *
 
 from pyalgotrade.utils import dt
-from pyalgotrade.bitstamp import common
 
-import logging
-logging.getLogger("requests").setLevel(logging.ERROR)
 
+def str2datetime(s):
+    return datetime.strptime(s,"%Y%m%d%H%M%S")
 
 def parse_datetime(ret):
     return dt.as_utc(ret)
@@ -42,69 +36,62 @@ class AccountBalance(object):
     def __init__(self, jsonDict):
         self.__jsonDict = jsonDict
 
-    def getDict(self):
-        return self.__jsonDict
-
     def getUSDAvailable(self):
-        return float(self.__jsonDict["usd_available"])
+        return float(self.__jsonDict["available_cny_display"])
 
     def getBTCAvailable(self):
-        return float(self.__jsonDict["btc_available"])
+        return float(self.__jsonDict["available_btc_display"])
 
 
 class Order(object):
     def __init__(self, jsonDict):
         self.__jsonDict = jsonDict
 
-    def getDict(self):
-        return self.__jsonDict
-
     def getId(self):
-        return int(self.__jsonDict["id"])
+        return int(self.__jsonDict['id'])
 
     def isBuy(self):
-        return self.__jsonDict["type"] == 0
-
-    def isSell(self):
         return self.__jsonDict["type"] == 1
 
+    def isSell(self):
+        return self.__jsonDict["type"] == 2
+
     def getPrice(self):
-        return float(self.__jsonDict["price"])
+        return float(self.__jsonDict["order_price"])
 
     def getAmount(self):
-        return float(self.__jsonDict["amount"])
+        return float(self.__jsonDict["order_amount"])
 
     def getDateTime(self):
-        return parse_datetime(self.__jsonDict["datetime"])
+        return parse_datetime(str2datetime(self.__jsonDict["order_time"]))
 
 
 class UserTransaction(object):
-    def __init__(self, jsonDict):
+    def __init__(self, jsonDict, vid):
         self.__jsonDict = jsonDict
-
-    def getDict(self):
-        return self.__jsonDict
+        self.__vid = vid
+        self.__datetime = datetime.now()
 
     def getBTC(self):
-        return float(self.__jsonDict["btc"])
+        return float(self.__jsonDict["processed_amount"])
 
     def getBTCUSD(self):
-        return float(self.__jsonDict["btc_usd"])
+        return float(self.__jsonDict["processed_price"])
 
     def getDateTime(self):
-        return parse_datetime(self.__jsonDict["datetime"])
+        return parse_datetime(self.__datetime)
 
     def getFee(self):
         return float(self.__jsonDict["fee"])
 
     def getId(self):
-        return int(self.__jsonDict["id"])
+        return int(self.__vid)
 
     def getOrderId(self):
-        return int(self.__jsonDict["order_id"])
+        return int(self.__jsonDict["id"])
 
     def getUSD(self):
-        return float(self.__jsonDict["usd"])
+        return float(self.__jsonDict["vot"])
 
 
 class HTTPClient(object):
@@ -119,89 +106,51 @@ class HTTPClient(object):
     def __init__(self):
         self.__id = 0;
         self.__orders = []
-        self.__prevNonce = None
-        self.__lock = threading.Lock()
-        self.getAllOrders()
 
     def __ID(self):
         self.__id += 1
         return self.__id
 
-    def _getNonce(self):
-        ret = int(time.time())
-        if ret == self.__prevNonce:
-            ret += 1
-        self.__prevNonce = ret
-        return ret
-
     def getAccountBalance(self):
-        url = "https://www.bitstamp.net/api/balance/"
-        jsonResponse = self._post(url, {})
-        return AccountBalance(jsonResponse)
+        ret = hapi.getAccountInfo(ACCOUNT_INFO)
+        return AccountBalance(ret)
 
     def getOpenOrders(self):
-        url = "https://www.bitstamp.net/api/open_orders/"
-        jsonResponse = self._post(url, {})
-        return [Order(json_open_order) for json_open_order in jsonResponse]
-
+        ret = hapi.getOrders(COIN_BTC, GET_ORDERS)
+        self.__orders = [d['id'] for d in ret]
+        return [Order(d) for d in ret]
+        
     def cancelOrder(self, orderId):
-        url = "https://www.bitstamp.net/api/cancel_order/"
-        params = {"id": orderId}
-        jsonResponse = self._post(url, params)
-        if jsonResponse != True:
+        ret = hapi.cancelOrder(BTC_COIN, orderId, CANCEL_ORDER)
+        if ret['result'] != "success":
             raise Exception("Failed to cancel order")
 
     def buyLimit(self, limitPrice, quantity):
-        # Rounding price to avoid 'Ensure that there are no more than 2 decimal places'
-        # error.
         price = round(limitPrice, 2)
-        # Rounding amount to avoid 'Ensure that there are no more than 8 decimal places'
-        # error.
         amount = round(quantity, 8)
         ret = hapi.buy(COIN_BTC, str(price), str(amount), None, None, BUY)
         if ret['result'] != 'success':
             return None
         self.__orders.append(ret['id'])
-        dic={'id':ret['id'], 'type':0, 'price':price, 'amount':amount, 'datetime':datetime.now()}
+        dic={'id':ret['id'], 'type':1, 'order_price':price, 'order_amount':amount, 'order_time':datetime.now().strftime("%Y%m%d%H%M%S")}
         return Order(dic)
 
     def sellLimit(self, limitPrice, quantity):
-        # Rounding price to avoid 'Ensure that there are no more than 2 decimal places'
-        # error.
         price = round(limitPrice, 2)
-        # Rounding amount to avoid 'Ensure that there are no more than 8 decimal places'
-        # error.
         amount = round(quantity, 8)
         ret = hapi.sell(COIN_BTC, str(price), str(amount), None, str(tradeid), SELL)
         if ret['result'] != 'success':
             return None
         self.__orders.append(ret['id'])
-        dic={'id':ret['id'], 'type':1, 'price':price, 'amount':amount, 'datetime':datetime.now()}
+        dic={'id':ret['id'], 'type':2, 'order_price':price, 'order_amount':amount, 'order_time':datetime.now().strftime("%Y%m%d%H%M%S")}
         return Order(dic)
 
     def getUserTransactions(self, transactionType=None):
         l = []
-        sid = self.__ID(),
+        sid = self.__ID()
         dt = datetime.now()
         for oid in self.__orders:
             ret = hapi.getOrderInfo(COIN_BTC, oid, ORDER_INFO)
-            fee = float(ret['fee'])
-            filled = float(ret['processed_amount'])
-            avgPrice = float(ret['processed_price'])
-            vot = float(ret['vot'])
-            l.append(UserTransaction({
-                "order_id"  :   oid,
-                "id"        :   sid,
-                "btc"       :   filled,
-                "btc_usd"   :   avgPrice,
-                "usd"       :   vot,
-                "datetime"  :   dt,
-                "fee"       :   fee,
-            }))
+            l.append(ret. sid)
         return l
 
-    def getAllOrder(self):
-        ret = hapi.getOrders(COIN_BTC, GET_ORDERS)
-        for order in ret:
-            self.__orders.append(order['id'])
-            
