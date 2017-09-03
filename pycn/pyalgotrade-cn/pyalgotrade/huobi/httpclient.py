@@ -121,6 +121,7 @@ class HTTPClient(object):
         return [Order(d) for d in ret]
         
     def cancelOrder(self, orderId):
+        return
         ret = hapi.cancelOrder(BTC_COIN, orderId, CANCEL_ORDER)
         if ret['result'] != "success":
             raise Exception("Failed to cancel order")
@@ -128,9 +129,12 @@ class HTTPClient(object):
     def buyLimit(self, limitPrice, quantity):
         price = round(limitPrice, 2)
         amount = round(quantity, 8)
+        ret = {'id':self.__ID()}
+        '''
         ret = hapi.buy(COIN_BTC, str(price), str(amount), None, None, BUY)
         if ret['result'] != 'success':
             return None
+        '''
         self.__orders.append(ret['id'])
         dic={'id':ret['id'], 'type':1, 'order_price':price, 'order_amount':amount, 'order_time':datetime.now().strftime("%Y%m%d%H%M%S")}
         return Order(dic)
@@ -138,9 +142,12 @@ class HTTPClient(object):
     def sellLimit(self, limitPrice, quantity):
         price = round(limitPrice, 2)
         amount = round(quantity, 8)
+        ret = {'id':self.__ID()}
+        '''
         ret = hapi.sell(COIN_BTC, str(price), str(amount), None, str(tradeid), SELL)
         if ret['result'] != 'success':
             return None
+        '''
         self.__orders.append(ret['id'])
         dic={'id':ret['id'], 'type':2, 'order_price':price, 'order_amount':amount, 'order_time':datetime.now().strftime("%Y%m%d%H%M%S")}
         return Order(dic)

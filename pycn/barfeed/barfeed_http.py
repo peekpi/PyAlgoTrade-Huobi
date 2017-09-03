@@ -61,11 +61,14 @@ class PollingThread(threading.Thread):
 
     def run(self):
         logger.debug("Thread started.")
+        ret = True
         while not self.__stopped:
-            self.__wait()
+            if ret:
+                self.__wait()
             if not self.__stopped:
+                ret = False
                 try:
-                    self.doCall()
+                    ret = self.doCall()
                 except Exception, e:
                     logger.critical("Unhandled exception", exc_info=e)
         logger.debug("Thread finished.")
@@ -96,12 +99,11 @@ class GetBarThread(PollingThread):
             raise Exception("Frequency must be greater than or equal to bar.Frequency.MINUTE")
         elif frequency < bar.Frequency.HOUR:
             self.__precision = "Minutes"
-            self.__period = frequency / bar.Frequency.MINUTE
         elif frequency < bar.Frequency.DAY:
             self.__precision = "Hours"
-            self.__period = frequency / bar.Frequency.HOUR
         else:
             raise Exception("Frequency must be less than bar.Frequency.DAY")
+        self.__period = frequency / bar.Frequency.MINUTE
 
         self.__queue = queue
         self.__identifiers = identifiers
@@ -126,14 +128,19 @@ class GetBarThread(PollingThread):
         for indentifier in self.__identifiers:
             try:
                 response = api.XigniteGlobalRealTime_GetBar(indentifier, endDateTime, self.__period)
+                if response is None:
+                    time.sleep(1)
+                    return False
                 # logger.debug(response)
-                barDict[indentifier] = build_bar(response["Bar"], self.__frequency)
+                barDict[indentifier] = build_bar(response[-1], self.__frequency)
             except api.XigniteError, e:
                 logger.error(e)
 
         if len(barDict):
             bars = bar.Bars(barDict)
             self.__queue.put((GetBarThread.ON_BARS, bars))
+            return True
+        return False
 
 
 class LiveFeed(barfeed.BaseBarFeed):
@@ -217,3 +224,4 @@ class LiveFeed(barfeed.BaseBarFeed):
         except Queue.Empty:
             pass
         return ret
+

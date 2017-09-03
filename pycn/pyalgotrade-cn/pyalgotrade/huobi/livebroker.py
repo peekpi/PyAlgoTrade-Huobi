@@ -23,7 +23,7 @@ import time
 import Queue
 
 from pyalgotrade import broker
-from pyalgotrade.bitstamp import httpclient
+import httpclient
 from pyalgotrade.bitstamp import common
 
 from httpClient import HuobiClient
@@ -127,7 +127,7 @@ class LiveBroker(broker.Broker):
 
     QUEUE_TIMEOUT = 0.01
 
-    def __init__(self, clientId, key, secret):
+    def __init__(self):
         super(LiveBroker, self).__init__()
         self.__stop = False
         self.__httpClient = HuobiClient
@@ -145,10 +145,6 @@ class LiveBroker(broker.Broker):
         assert(order.getId() in self.__activeOrders)
         assert(order.getId() is not None)
         del self.__activeOrders[order.getId()]
-
-    # Factory method for testing purposes.
-    def buildHTTPClient(self, clientId, key, secret):
-        return httpclient.HTTPClient(clientId, key, secret)
 
     def refreshAccountBalance(self):
         """Refreshes cash and BTC balance."""

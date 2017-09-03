@@ -8,6 +8,8 @@ from pyalgotrade.websocket.client import WebSocketClientBase
 class HuobiWebSocket(WebSocketClientBase):
     def __init__(self, url):
         super(HuobiWebSocket, self).__init__(url)
+        print(url)
+
     def received_message(self, message):
         buf = StringIO(message.data)
         message.data = gzip.GzipFile(fileobj=buf).read()
@@ -37,7 +39,7 @@ class HuobiWebSocket(WebSocketClientBase):
 
     def subscribe(self, symbol, period):
         msg = { 
-                "sub": "market.ltccny.kline.5min",
+                "sub": "market.ltccny.kline.60min",
                 "id":"id1"
                 }
         self.send(msg)

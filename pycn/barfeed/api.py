@@ -24,6 +24,8 @@ import urllib2
 import json
 import pytz
 
+import time
+import datetime
 from pyalgotrade.utils import dt
 
 
@@ -79,22 +81,40 @@ def parse_instrument_exchange(identifier):
         raise Exception("Invalid identifier. Exchange suffix is missing")
     return ret
 
+MINSTR = {
+    1:'001',
+    5:'005',
+    15:'015',
+    30:'030',
+    60:'060',
+    60*24:'100',
+}
+
+lastTime = None
 
 def XigniteGlobalRealTime_GetBar(identifier, endDateTime, period, length = 1):
-    if dt.datetime_is_naive(endDateTime):
-        raise Exception("endDateTime must have a timezone")
-
-    url = "http://api.huobi.com/staticmarket/ltc_kline_001_json.js?length=%d&timestamp=%s"%(length,endDateTime.strftime("%Y%m%d%H%M%S"))
-    dic = json_http_request(url)[0]
+    global lastTime
+    enTime = endDateTime-datetime.timedelta(seconds=period*60*2)
+    timeStr = enTime.strftime("%Y%m%d%H%M%S000")
+    if lastTime == timeStr:
+        return None
+    url = "http://api.huobi.com/staticmarket/ltc_kline_%s_json.js?length=%d&timestamp=%d"%(MINSTR[period], length+1, time.time())
+    dics = json_http_request(url)
+    dics.pop()
+#    dic.sort(key=lambda x:x[0])
 #    "Date","Open","High","Low","Close","Volume","Adj Close"
-    ret = {
-            "Bar":{
+    print("%s: %s == %s"%(url, timeStr, dics[-1][0]))
+    if timeStr != dics[-1][0]:
+        return None
+    lastTime = timeStr
+    return [ {
               "Time":dic[0],
               "Open":dic[1],
               "High":dic[2],
               "Low":dic[3],
               "Close":dic[4],
               "Volume":dic[5],
-            }
-          }
-    return ret
+      }
+      for dic in dics
+    ]
+

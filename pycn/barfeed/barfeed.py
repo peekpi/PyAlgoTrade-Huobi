@@ -101,7 +101,9 @@ class GetBarThread(PollingThread, HuobiWebSocket):
         self.__apiCallDelay = apiCallDelay
 
         self.__updateNextBarClose()
+        print(self.getNextCallDateTime())
         self.__lastTime = None
+        self.__lastMsg = None
 
     def __updateNextBarClose(self):
         self.__nextBarClose = resamplebase.build_range(utcnow(), self.__frequency).getEnding()
@@ -109,25 +111,30 @@ class GetBarThread(PollingThread, HuobiWebSocket):
     def getNextCallDateTime(self):
         return self.__nextBarClose + self.__apiCallDelay
 
+    def getNextBarTime(self):
+        return self.__nextBarClose
+
     def onKline(self, timestamp, msg):
-        time.localtime(int(timestamp))
-        msg['time'] = time.strftime("%Y-%m-%d %H:%M:%S")
-        if self.__lastTime == msg['time']:
+        if self.__lastTime == timestamp:
             return
-        self.__lastTime = msg['time']
+        self.__lastTime = timestamp
+        self.__lastMsg = msg
+        newDt = dt.as_utc(datetime.datetime.fromtimestamp(timestamp/1000))
+        if newDt >= self.getNextBarTime():
+            pass
+        msg['time'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(timestamp)))
         barDict = {}
         for indentifier in self.__identifiers:
                 barDict[indentifier] = build_bar(msg, self.__frequency)
         if len(barDict):
             bars = bar.Bars(barDict)
-            print("put queue")
             self.__queue.put((GetBarThread.ON_BARS, bars))
 
 
     def doCall(self):
         while True:
             print('--client start')
-            self.connect();
+            self.connect()
             self.startClient()
             print("---------doCall end")
         '''
@@ -223,7 +230,6 @@ class LiveFeed(barfeed.BaseBarFeed):
         ret = None
         try:
             eventType, eventData = self.__queue.get(True, LiveFeed.QUEUE_TIMEOUT)
-            print("get queue")
             if eventType == GetBarThread.ON_BARS:
                 ret = eventData
             else:
