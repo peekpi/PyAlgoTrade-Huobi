@@ -72,26 +72,27 @@ def run_strategy():
     # Evaluate the strategy with the feed.
     myStrategy = MyStrategy(feed, "ltc", liveBroker)
     
-    returnsAnalyzer = returns.Returns()
-    myStrategy.attachAnalyzer(returnsAnalyzer)
+#    returnsAnalyzer = returns.Returns()
+#    myStrategy.attachAnalyzer(returnsAnalyzer)
     
 
     # Attach the plotter to the strategy.
-    plt = plotter.StrategyPlotter(myStrategy)
+#    plt = plotter.StrategyPlotter(myStrategy)
     # Include the SMA in the instrument's subplot to get it displayed along with the closing prices.
-    plt.getInstrumentSubplot("orcl").addDataSeries("SMA60", myStrategy.getSMA(60))
-    plt.getInstrumentSubplot("orcl").addDataSeries("SMA10", myStrategy.getSMA(10))
-    plt.getInstrumentSubplot("orcl").addDataSeries("SMA30", myStrategy.getSMA(30))
+#    plt.getInstrumentSubplot("orcl").addDataSeries("SMA60", myStrategy.getSMA(60))
+#    plt.getInstrumentSubplot("orcl").addDataSeries("SMA10", myStrategy.getSMA(10))
+#    plt.getInstrumentSubplot("orcl").addDataSeries("SMA30", myStrategy.getSMA(30))
     # Plot the simple returns on each bar.
-    plt.getOrCreateSubplot("returns").addDataSeries("Simple returns", returnsAnalyzer.getReturns())
+#    plt.getOrCreateSubplot("returns").addDataSeries("Simple returns", returnsAnalyzer.getReturns())
     
     
     myStrategy.run()
-    print "Final portfolio value: $%.2f" % myStrategy.getBroker().getEquity()
+#    print "Final portfolio value: $%.2f" % myStrategy.getBroker().getEquity()
+    print "Final portfolio value: $%.2f" % myStrategy.getBroker().getCash()
 #    myStrategy.info("Final portfolio value: $%.2f" % myStrategy.getResult())
 
     # Plot the strategy.
-    plt.plot()
+#    plt.plot()
 
 run_strategy()
 
