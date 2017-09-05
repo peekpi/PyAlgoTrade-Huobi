@@ -23,7 +23,7 @@ import time
 import Queue
 
 from pyalgotrade import broker
-import httpclient
+#import httpclient
 from pyalgotrade.bitstamp import common
 
 from httpClient import HuobiClient
@@ -57,7 +57,7 @@ class TradeMonitor(threading.Thread):
         self.__stop = False
 
     def _getNewTrades(self):
-        userTrades = self.__httpClient.getUserTransactions(httpclient.HTTPClient.UserTransactionType.MARKET_TRADE)
+        userTrades = self.__httpClient.getUserTransactions(HuobiClient.UserTransactionType.MARKET_TRADE)
 
         # Get the new trades only.
         ret = []
@@ -130,7 +130,7 @@ class LiveBroker(broker.Broker):
     def __init__(self):
         super(LiveBroker, self).__init__()
         self.__stop = False
-        self.__httpClient = HuobiClient
+        self.__httpClient = HuobiClient()
         self.__tradeMonitor = TradeMonitor(self.__httpClient)
         self.__cash = 0
         self.__shares = {}
@@ -195,7 +195,8 @@ class LiveBroker(broker.Broker):
                 self.refreshAccountBalance()
                 # Update the order.
                 orderExecutionInfo = broker.OrderExecutionInfo(fillPrice, abs(btcAmount), fee, dateTime)
-                order.addExecutionInfo(orderExecutionInfo)
+#                order.addExecutionInfo(orderExecutionInfo)
+                order.updateExecutionInfo(orderExecutionInfo)
                 if not order.isActive():
                     self._unregisterOrder(order)
                 # Notify that the order was updated.
