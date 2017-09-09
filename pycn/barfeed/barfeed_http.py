@@ -49,7 +49,7 @@ class PollingThread(threading.Thread):
         # Wait until getNextCallDateTime checking for cancelation every 0.5 second.
         nextCall = self.getNextCallDateTime()
 #        nextCall = self.getNextCallDateTime() - datetime.timedelta(seconds=3600)
-        print("nextTime:%s"%nextCall)
+        print("----nextTime:%s"%nextCall)
         while not self.__stopped and utcnow() < nextCall:
             time.sleep(0.5)
 
@@ -89,6 +89,7 @@ def build_bar(barDict, frequency):
 class GetBarThread(PollingThread):
 
     # Events
+    ON_HISTORY_BARS = 0
     ON_BARS = 1
 
     def __init__(self, queue, identifiers, frequency, apiCallDelay):
@@ -111,7 +112,6 @@ class GetBarThread(PollingThread):
         self.__nextBarClose = None
         # The delay between the bar's close and the API call.
         self.__apiCallDelay = apiCallDelay
-
         self.__updateNextBarClose()
 
     def __updateNextBarClose(self):
@@ -120,6 +120,40 @@ class GetBarThread(PollingThread):
     def getNextCallDateTime(self):
         return self.__nextBarClose + self.__apiCallDelay
 
+    def run(self):
+        self.doGetHistory()
+        super(GetBarThread, self).run()
+
+    def doGetHistory(self):
+        while not self.stopped():
+            endDateTime = self.__nextBarClose
+            self.__updateNextBarClose()
+            dicts = {}
+
+            try:
+                for indentifier in self.__identifiers:
+                    response = api.XigniteGlobalRealTime_GetBar(indentifier, endDateTime, self.__period, 100)
+                    if response is None:
+                        time.sleep(1)
+                        return False
+                    dicts[indentifier] = response
+                break
+            except:
+                continue
+            
+        while not self.stopped():
+            barDict = {}
+            for indentifier in self.__identifiers:
+                response = dicts[indentifier]
+                if len(response) == 0:
+                    break
+                barDict[indentifier] = build_bar(response.pop(0), self.__frequency)
+
+            if len(barDict) == 0:
+                break
+            bars = bar.Bars(barDict)
+            self.__queue.put((GetBarThread.ON_HISTORY_BARS, bars))
+        
     def doCall(self):
         endDateTime = self.__nextBarClose
         self.__updateNextBarClose()
@@ -178,6 +212,7 @@ class LiveFeed(barfeed.BaseBarFeed):
 
         self.__queue = Queue.Queue()
         self.__thread = GetBarThread(self.__queue, identifiers, frequency, datetime.timedelta(seconds=apiCallDelay))
+        self.__isHistory = True
         for instrument in identifiers:
             self.registerInstrument(instrument)
 
@@ -213,11 +248,15 @@ class LiveFeed(barfeed.BaseBarFeed):
     def barsHaveAdjClose(self):
         return False
 
+    def isHistory(self):
+        return self.__isHistory
+
     def getNextBars(self):
         ret = None
         try:
             eventType, eventData = self.__queue.get(True, LiveFeed.QUEUE_TIMEOUT)
-            if eventType == GetBarThread.ON_BARS:
+            if eventType in (GetBarThread.ON_BARS, GetBarThread.ON_HISTORY_BARS):
+                self.__isHistory = eventType is GetBarThread.ON_HISTORY_BARS
                 ret = eventData
             else:
                 logger.error("Invalid event received: %s - %s" % (eventType, eventData))

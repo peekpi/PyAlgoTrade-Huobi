@@ -55,6 +55,13 @@ class TradeMonitor(threading.Thread):
         self.__httpClient = httpClient
         self.__queue = Queue.Queue()
         self.__stop = False
+        print("livebroker.TradeMonitor.__init__: POLL_FREQUENCY is %d"%TradeMonitor.POLL_FREQUENCY)
+
+    def __wait(self):
+        sleepTime = 0
+        while not self.__stop and sleepTime < TradeMonitor.POLL_FREQUENCY:
+            time.sleep(1)
+            sleepTime += 1
 
     def _getNewTrades(self):
         userTrades = self.__httpClient.getUserTransactions(HuobiClient.UserTransactionType.MARKET_TRADE)
@@ -92,8 +99,7 @@ class TradeMonitor(threading.Thread):
                     self.__queue.put((TradeMonitor.ON_USER_TRADE, trades))
             except Exception, e:
                 common.logger.critical("Error retrieving user transactions", exc_info=e)
-
-            time.sleep(TradeMonitor.POLL_FREQUENCY)
+            self.__wait()
 
     def stop(self):
         self.__stop = True

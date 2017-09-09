@@ -8,6 +8,17 @@ from huobi.Util import *
 
 import json
 
+def post_retry(payload):
+    while True:
+        try:
+            return post_retry(payload)
+            if r.status_code == 200:
+                return r.json()
+            continue
+        except:
+            continue
+    
+
 '''
 获取账号详情
 '''
@@ -20,12 +31,7 @@ def getAccountInfo(method):
     del params['secret_key']
 
     payload = urllib.urlencode(params)
-    r = requests.post(HUOBI_SERVICE_API, params=payload)
-    if r.status_code == 200:
-        data = r.json()
-        return data
-    else:
-        return None
+    return post_retry(payload)
 
 '''
 下单接口
@@ -48,12 +54,7 @@ def buy(coinType,price,amount,tradePassword,tradeid,method):
         params['trade_id']=tradeid
 
     payload = urllib.urlencode(params)
-    r = requests.post(HUOBI_SERVICE_API, params=payload)
-    if r.status_code == 200:
-        data = r.json()
-        return data
-    else:
-        return None
+    return post_retry(payload)
 
 '''
 提交市价单接口
@@ -76,13 +77,7 @@ def buyMarket(coinType,amount,tradePassword,tradeid,method):
     del params['secret_key']
 
     payload = urllib.urlencode(params)
-    r = requests.post(HUOBI_SERVICE_API, params=payload)
-    if r.status_code == 200:
-        data = r.json()
-        return data
-    else:
-        return None
-
+    return post_retry(payload)
 
 '''
 撤销订单
@@ -98,12 +93,7 @@ def cancelOrder(coinType,id,method):
     del params['secret_key']
 
     payload = urllib.urlencode(params)
-    r = requests.post(HUOBI_SERVICE_API, params=payload)
-    if r.status_code == 200:
-        data = r.json()
-        return data
-    else:
-        return None
+    return post_retry(payload)
 
 '''
 查询个人最新10条成交订单
@@ -117,12 +107,7 @@ def getNewDealOrders(coinType,method):
     del params['secret_key']
 
     payload = urllib.urlencode(params)
-    r = requests.post(HUOBI_SERVICE_API, params=payload)
-    if r.status_code == 200:
-        data = r.json()
-        return data
-    else:
-        return None
+    return post_retry(payload)
 
 '''
 根据trade_id查询oder_id
@@ -137,12 +122,7 @@ def getOrderIdByTradeId(coinType,tradeid,method):
     del params['secret_key']
 
     payload = urllib.urlencode(params)
-    r = requests.post(HUOBI_SERVICE_API, params=payload)
-    if r.status_code == 200:
-        data = r.json()
-        return data
-    else:
-        return None
+    return post_retry(payload)
 
 '''
 获取所有正在进行的委托
@@ -156,12 +136,7 @@ def getOrders(coinType,method):
     del params['secret_key']
 
     payload = urllib.urlencode(params)
-    r = requests.post(HUOBI_SERVICE_API, params=payload)
-    if r.status_code == 200:
-        data = r.json()
-        return data
-    else:
-        return None
+    return post_retry(payload)
 
 '''
 获取订单详情
@@ -176,12 +151,7 @@ def getOrderInfo(coinType,id,method):
     del params['secret_key']
 
     payload = urllib.urlencode(params)
-    r = requests.post(HUOBI_SERVICE_API, params=payload)
-    if r.status_code == 200:
-        data = r.json()
-        return data
-    else:
-        return None
+    return post_retry(payload)
 
 '''
 限价卖出
@@ -203,12 +173,7 @@ def sell(coinType,price,amount,tradePassword,tradeid,method):
         params['trade_id']=tradeid
 
     payload = urllib.urlencode(params)
-    r = requests.post(HUOBI_SERVICE_API, params=payload)
-    if r.status_code == 200:
-        data = r.json()
-        return data
-    else:
-        return None
+    return post_retry(payload)
 
 '''
 市价卖出
@@ -230,11 +195,5 @@ def sellMarket(coinType,amount,tradePassword,tradeid,method):
     del params['secret_key']
 
     payload = urllib.urlencode(params)
-    r = requests.post(HUOBI_SERVICE_API, params=payload)
-    if r.status_code == 200:
-        data = r.json()
-        return data
-    else:
-        return None
-
+    return post_retry(payload)
 

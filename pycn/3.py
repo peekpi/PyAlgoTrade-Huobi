@@ -41,9 +41,10 @@ class MyStrategy(strategy.BaseStrategy):
 
     def onBars(self, bars):
         # Wait for enough bars to be available to calculate a SMA.
-        print("new onBars!")
         bar = bars[self.__instrument]
-        print("close:%.2f"%bar.getPrice())
+        print("%s:%s: close:%.2f"%(self.__instrument, bar.getDateTime(), bar.getPrice()))
+        if self.getFeed().isHistory():
+            return
         if self.__sma[30][-1] is None:
             return
 
@@ -54,7 +55,7 @@ class MyStrategy(strategy.BaseStrategy):
                 mbroker = self.getBroker();
                 shares = mbroker.getCash()/bar.getPrice()*0.9;
 #                self.__position = self.marketOrder(self.__instrument, self.__shares)
-                self.__position = self.enterLong(self.__instrument, shares, True)
+                self.__position = self.enterLongLimit(self.__instrument, bar.getPrice(), shares, True)
         # Check if we have to exit the position.
 #        elif not self.__position.exitActive() and cross.cross_below(self.__prices, self.__sma[10]) > 0:
         elif not self.__position.exitActive() and cross.cross_below(self.__sma[10], self.__sma[30]) > 0:
