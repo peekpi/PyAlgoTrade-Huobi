@@ -11,7 +11,7 @@ import json
 def post_retry(payload):
     while True:
         try:
-            return post_retry(payload)
+            r = requests.post(HUOBI_SERVICE_API, params=payload)
             if r.status_code == 200:
                 return r.json()
             continue

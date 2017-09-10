@@ -8,6 +8,9 @@ from pyalgotrade.stratanalyzer import returns
 from barfeed.barfeed_http import LiveFeed
 from huobi.livebroker import LiveBroker
 
+COIN_TYPE='btc'
+#COIN_TYPE='ltc'
+
 class MyStrategy(strategy.BaseStrategy):
     def __init__(self, feed, instrument, brk):
         super(MyStrategy, self).__init__(feed, brk)
@@ -45,10 +48,20 @@ class MyStrategy(strategy.BaseStrategy):
         print("%s:%s: close:%.2f"%(self.__instrument, bar.getDateTime(), bar.getPrice()))
         if self.getFeed().isHistory():
             return
-        if self.__sma[30][-1] is None:
+        if self.__sma[60][-1] is None:
             return
 
         bar = bars[self.__instrument]
+        if self.__position is None:
+            mbroker = self.getBroker();
+            shares = mbroker.getCash()/bar.getPrice()*0.9;
+            shares = 1;
+            self.__position = self.enterLongLimit(self.__instrument, bar.getPrice(), shares, True)
+            self.__buyCount = 0
+        else:
+            self.__position.exitLimit(bar.getPrice())
+        return
+            
         # If a position was not opened, check if we should enter a long position.
         if self.__position is None:
             if cross.cross_above(self.__sma[10], self.__sma[30]) > 0:
@@ -64,14 +77,14 @@ class MyStrategy(strategy.BaseStrategy):
 
 def run_strategy():
     # Load the yahoo feed from the CSV file
-    feed = LiveFeed(["ltc"], Frequency.MINUTE*5, 5)
+    feed = LiveFeed([COIN_TYPE], Frequency.MINUTE*5, 5)
 
     # commission
 #    broker_commission = broker.backtesting.TradePercentage(0.002)
 #    broker_brk = broker.backtesting.Broker(20000, feed, broker_commission)
-    liveBroker = LiveBroker()
+    liveBroker = LiveBroker(COIN_TYPE)
     # Evaluate the strategy with the feed.
-    myStrategy = MyStrategy(feed, "ltc", liveBroker)
+    myStrategy = MyStrategy(feed, COIN_TYPE, liveBroker)
     
 #    returnsAnalyzer = returns.Returns()
 #    myStrategy.attachAnalyzer(returnsAnalyzer)

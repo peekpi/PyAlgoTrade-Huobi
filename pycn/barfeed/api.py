@@ -99,12 +99,11 @@ def XigniteGlobalRealTime_GetBar(identifier, endDateTime, period, length = 1):
     if lastTime == timeStr:
         return None
     length = length + 1 if length < 2000 else 2000
-    url = "http://api.huobi.com/staticmarket/ltc_kline_%s_json.js?length=%d&timestamp=%d"%(MINSTR[period], length, time.time())
+    url = "http://api.huobi.com/staticmarket/%s_kline_%s_json.js?length=%d&timestamp=%d"%(identifier, MINSTR[period], length, time.time())
     dics = json_http_request(url)
     dics.pop()
 #    dic.sort(key=lambda x:x[0])
 #    "Date","Open","High","Low","Close","Volume","Adj Close"
-    print("%s: %s == %s"%(url, timeStr, dics[-1][0]))
     if timeStr != dics[-1][0]:
         return None
     lastTime = timeStr

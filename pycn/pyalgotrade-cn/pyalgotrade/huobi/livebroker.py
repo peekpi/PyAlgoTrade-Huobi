@@ -56,6 +56,7 @@ class TradeMonitor(threading.Thread):
         self.__queue = Queue.Queue()
         self.__stop = False
         print("livebroker.TradeMonitor.__init__: POLL_FREQUENCY is %d"%TradeMonitor.POLL_FREQUENCY)
+        print("common.btc_symbol:%s"%common.btc_symbol)
 
     def __wait(self):
         sleepTime = 0
@@ -64,7 +65,7 @@ class TradeMonitor(threading.Thread):
             sleepTime += 1
 
     def _getNewTrades(self):
-        userTrades = self.__httpClient.getUserTransactions(HuobiClient.UserTransactionType.MARKET_TRADE)
+        userTrades = self.__httpClient.getUserTransactions()
 
         # Get the new trades only.
         ret = []
@@ -133,10 +134,11 @@ class LiveBroker(broker.Broker):
 
     QUEUE_TIMEOUT = 0.01
 
-    def __init__(self):
+    def __init__(self, instrument):
         super(LiveBroker, self).__init__()
+        common.btc_symbol = instrument
         self.__stop = False
-        self.__httpClient = HuobiClient()
+        self.__httpClient = HuobiClient(instrument)
         self.__tradeMonitor = TradeMonitor(self.__httpClient)
         self.__cash = 0
         self.__shares = {}
@@ -189,20 +191,32 @@ class LiveBroker(broker.Broker):
         self.__stop = False  # No errors. Keep running.
 
     def _onUserTrades(self, trades):
+        ret = False
         for trade in trades:
             order = self.__activeOrders.get(trade.getOrderId())
             if order is not None:
-                fee = trade.getFee()
-                fillPrice = trade.getBTCUSD()
-                btcAmount = trade.getBTC()
-                dateTime = trade.getDateTime()
+                filled = order.getFilled()
+                avgPrice = order.getAvgFillPrice()
+                newQuantity = trade.getBTC() - filled
+                if newQuantity == 0:
+                    continue
+                ret = True
+                newFillPrice = trade.getBTCUSD()
+                if avgPrice is not None:
+                    newFillPrice = (newFillPrice * trade.getBTC() - order.getFilled() * avgPrice)/newQuantity
+                newFee = trade.getFee() - order.getCommissions()
+                newDateTime = trade.getDateTime()
+
+                print('--new: price:%f btc:%f fee:%s time:%s'%(newFillPrice, newQuantity, newFee, newDateTime))
 
                 # Update cash and shares.
                 self.refreshAccountBalance()
                 # Update the order.
-                orderExecutionInfo = broker.OrderExecutionInfo(fillPrice, abs(btcAmount), fee, dateTime)
-#                order.addExecutionInfo(orderExecutionInfo)
-                order.updateExecutionInfo(orderExecutionInfo)
+                orderExecutionInfo = broker.OrderExecutionInfo(newFillPrice, abs(newQuantity), newFee, newDateTime)
+                order.addExecutionInfo(orderExecutionInfo)
+                if trade.isFilled():
+                    order.setState(order.State.FILLED)
+#                order.updateExecutionInfo(orderExecutionInfo)
                 if not order.isActive():
                     self._unregisterOrder(order)
                 # Notify that the order was updated.
@@ -213,6 +227,7 @@ class LiveBroker(broker.Broker):
                 self.notifyOrderEvent(broker.OrderEvent(order, eventType, orderExecutionInfo))
             else:
                 common.logger.info("Trade %d refered to order %d that is not active" % (trade.getId(), trade.getOrderId()))
+        return ret
 
     # BEGIN observer.Subject interface
     def start(self):
@@ -246,7 +261,7 @@ class LiveBroker(broker.Broker):
             eventType, eventData = self.__tradeMonitor.getQueue().get(True, LiveBroker.QUEUE_TIMEOUT)
 
             if eventType == TradeMonitor.ON_USER_TRADE:
-                self._onUserTrades(eventData)
+                return self._onUserTrades(eventData)
             else:
                 common.logger.error("Invalid event received to dispatch: %s - %s" % (eventType, eventData))
         except Queue.Empty:
