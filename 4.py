@@ -28,6 +28,9 @@ class MyStrategy(strategy.BacktestingStrategy):
         self.__mcash=brk.getCash();
         self.__mcoin=0
         self.__mprice = 0
+        
+        self.__si = 0
+        self.__jsl = []
 
     def getSMA(self, period):
         return self.__sma[period]
@@ -36,10 +39,10 @@ class MyStrategy(strategy.BacktestingStrategy):
         execInfo = position.getEntryOrder().getExecutionInfo()
         self.info("BUY at $%.2f %.2f %.2f" % (execInfo.getPrice(), execInfo.getQuantity(), self.getBroker().getCash()))
 
-        __tcoin = self.__mcash / execInfo.getPrice() * 0.998
+        __tcoin = self.__mcash / execInfo.getPrice() * 0.997
         if __tcoin > execInfo.getQuantity():
             __tcoin = execInfo.getQuantity()
-        __tcoin = math.floor(__tcoin, 4)
+        __tcoin = round(__tcoin, 4)
         self.__mcash -= execInfo.getPrice()*__tcoin/0.998
         self.__mcoin += __tcoin
         self.__mcash = int(self.__mcash)
@@ -73,6 +76,7 @@ class MyStrategy(strategy.BacktestingStrategy):
         self.__position.exitMarket()
 
     def onBars(self, bars):
+        self.__si += 1
         # Wait for enough bars to be available to calculate a SMA.
         if self.__sma[30][-1] is None:
             return
@@ -82,6 +86,7 @@ class MyStrategy(strategy.BacktestingStrategy):
         # If a position was not opened, check if we should enter a long position.
         if self.__position is None:
             if cross.cross_above(self.__sma[10], self.__sma[30]) > 0:
+                self.__jsl.append([self.__si-1])
                 mbroker = self.getBroker();
                 shares = mbroker.getCash()/bar.getPrice()*0.95;
 #                self.__position = self.marketOrder(self.__instrument, self.__shares)
@@ -91,8 +96,11 @@ class MyStrategy(strategy.BacktestingStrategy):
 #        elif not self.__position.exitActive() and cross.cross_below(self.__prices, self.__sma[10]) > 0:
         elif not self.__position.exitActive() and (self.__position.getReturn() > 0.3 or cross.cross_below(self.__sma[10], self.__sma[30]) > 0):
             list(self.getActivePositions())[0].exitMarket()
+            self.__jsl[-1].append(self.__si-1)
             #self.__position.exitMarket()
 #        print("PnL:%f ret:%f"%(_p.getPnL(True), _p.getReturn()))
+    def getJSL(self):
+        return self.__jsl
 
 
 def run_strategy():
@@ -127,6 +135,7 @@ def run_strategy():
 
     # Plot the strategy.
     plt.plot()
+    print(myStrategy.getJSL())
 
 run_strategy()
 
