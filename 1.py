@@ -6,6 +6,13 @@ from pyalgotrade.technical import ma
 from pyalgotrade.technical import cross
 from pyalgotrade import plotter
 from pyalgotrade.stratanalyzer import returns
+from pyalgotrade.bitstamp import common
+
+class floatBroker(broker.backtesting.Broker):
+    def getInstrumentTraits(self, instrument):
+        return common.BTCTraits()
+
+    
 
 class MyStrategy(strategy.BacktestingStrategy):
     def __init__(self, feed, instrument, brk):
@@ -67,7 +74,8 @@ def run_strategy():
 
     # commission
     broker_commission = broker.backtesting.TradePercentage(0.002)
-    broker_brk = broker.backtesting.Broker(50000, feed, broker_commission)
+    broker_brk = floatBroker(50000, feed, broker_commission)
+#    broker_brk = broker.backtesting.Broker(50000, feed)
     # Evaluate the strategy with the feed.
     myStrategy = MyStrategy(feed, "orcl", broker_brk)
     
