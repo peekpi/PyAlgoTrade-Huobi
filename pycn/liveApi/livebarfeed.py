@@ -36,9 +36,20 @@ logger = pyalgotrade.logger.getLogger("xignite")
 
 
 def utcnow():
-#    return dt.as_utc(datetime.datetime.utcnow())
-    return dt.as_utc(datetime.datetime.now())
+    return dt.as_utc(datetime.datetime.utcnow())
 
+def timestamp_to_DateTimeLocal(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp)
+
+def utcToLocal(utcDatetime):
+    return datetime.datetime.fromtimestamp(dt.datetime_to_timestamp(utcDatetime))
+
+class liveBar(bar.BasicBar):
+    def __init__(self, barDict, frequency):
+        self.__DateTimeLocal = timestamp_to_DateTimeLocal(barDict["Timestamp"])
+        super(liveBar, self).__init__(dt.timestamp_to_datetime(barDict["Timestamp"]), barDict["Open"], barDict["High"], barDict["Low"], barDict["Close"], barDict["Volume"], None, frequency)
+    def getDateTimeLocal(self):
+        return self.__DateTimeLocal
 
 class PollingThread(threading.Thread):
     def __init__(self):
@@ -49,7 +60,7 @@ class PollingThread(threading.Thread):
         # Wait until getNextCallDateTime checking for cancelation every 0.5 second.
         nextCall = self.getNextCallDateTime()
 #        nextCall = self.getNextCallDateTime() - datetime.timedelta(seconds=3600)
-        print("----nextTime:%s"%nextCall)
+        print("----nextTime:%s"%utcToLocal(nextCall))
         while not self.__stopped and utcnow() < nextCall:
             time.sleep(0.5)
 
@@ -79,10 +90,6 @@ class PollingThread(threading.Thread):
 
     def doCall(self):
         raise NotImplementedError()
-
-
-def build_bar(barDict, frequency):
-    return bar.BasicBar(dt.timestamp_to_datetime(barDict["Timestamp"]), barDict["Open"], barDict["High"], barDict["Low"], barDict["Close"], barDict["Volume"], None, frequency)
 
 
 class GetBarThread(PollingThread):
@@ -131,7 +138,7 @@ class GetBarThread(PollingThread):
 
             try:
                 for indentifier in self.__identifiers:
-                    response = api.getKLineBar(indentifier, endTimestamp - self.__frequency, self.__period, 100)
+                    response = api.getKLineBar(indentifier, endTimestamp - self.__frequency*2, self.__period, 100)
                     if response is None:
                         raise Exception("getKLineBar return None!")
                     dicts[indentifier] = response
@@ -146,7 +153,7 @@ class GetBarThread(PollingThread):
                 response = dicts[indentifier]
                 if len(response) == 0:
                     break
-                barDict[indentifier] = build_bar(response.pop(-1), self.__frequency)
+                barDict[indentifier] = liveBar(response.pop(-1), self.__frequency)
 
             if len(barDict) == 0:
                 break
@@ -159,11 +166,11 @@ class GetBarThread(PollingThread):
 
         for indentifier in self.__identifiers:
             try:
-                response = api.getKLineBar(indentifier, endTimestamp, self.__period)
+                response = api.getKLineBar(indentifier, endTimestamp - self.__frequency, self.__period)
                 if response is None:
                     raise Exception("getKLineBar return None!")
                 # logger.debug(response)
-                barDict[indentifier] = build_bar(response[-1], self.__frequency)
+                barDict[indentifier] = liveBar(response[-1], self.__frequency)
             except:
                 time.sleep(1)
                 return False
