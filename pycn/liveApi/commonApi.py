@@ -24,33 +24,37 @@ import json
 import time
 import datetime
 
-MINSTR = {
-    1:'001',
-    5:'005',
-    15:'015',
-    30:'030',
-    60:'060',
-    60*24:'100',
-}
+from hbsdk import ApiClient, ApiError
+
+client = ApiClient('API_KEY', 'API_SECRET')
 
 def getKLineBar(identifier, endTimestamp, period, length = 1):
+    print('-------getKLine:%s %s %s %s'%(identifier, endTimestamp, period, length))
     length = length + 1 if length < 2000 else 2000
-    url = "http://api.huobi.com/staticmarket/%s_kline_%s_json.js?length=%d&timestamp=%d"%(identifier, MINSTR[period], length, time.time())
-    dics = json_http_request(url)
-    dics.pop()
-#    dic.sort(key=lambda x:x[0])
-#    "Date","Open","High","Low","Close","Volume","Adj Close"
-    if timeStr != dics[-1][0]:
+
+    klines = client.mget('/market/history/kline', symbol=identifier, period='%dmin'%period, size=length)
+    print(len(klines))
+    print(klines[0])
+    print(klines[1])
+    time.sleep(1)
+    if len(kline) != size:
         return None
-    lastTime = timeStr
+    del klines[0]
+    x = klines[0]
+    if x.id < endTimestamp:
+        return None
+    if x.id > endTimestamp:
+        print('recv:%d expect:%d'%(x.id, endTimestamp))
+        exit()
+
     return [ {
-              "Time":dic[0],
-              "Open":dic[1],
-              "High":dic[2],
-              "Low":dic[3],
-              "Close":dic[4],
-              "Volume":dic[5],
+              "Timestamp":k.id,
+              "Open":k.open,
+              "High":k.high,
+              "Low":k.low,
+              "Close":k.close,
+              "Volume":k.vol,
       }
-      for dic in dics
+      for k in klines
     ]
 

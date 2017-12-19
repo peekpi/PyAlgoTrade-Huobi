@@ -29,7 +29,7 @@ from pyalgotrade import dataseries
 from pyalgotrade import resamplebase
 import pyalgotrade.logger
 from pyalgotrade.utils import dt
-import api
+import commonApi as api
 
 
 logger = pyalgotrade.logger.getLogger("xignite")
@@ -82,8 +82,7 @@ class PollingThread(threading.Thread):
 
 
 def build_bar(barDict, frequency):
-    f=lambda x:x[0:4]+"-"+x[4:6]+"-"+x[6:8]+" "+x[8:10]+":"+x[10:12]+":"+x[12:14]
-    return bar.BasicBar(f(barDict["Time"]), barDict["Open"], barDict["High"], barDict["Low"], barDict["Close"], barDict["Volume"], None, frequency)
+    return bar.BasicBar(dt.timestamp_to_datetime(barDict["Timestamp"]), barDict["Open"], barDict["High"], barDict["Low"], barDict["Close"], barDict["Volume"], None, frequency)
 
 
 class GetBarThread(PollingThread):
@@ -147,7 +146,7 @@ class GetBarThread(PollingThread):
                 response = dicts[indentifier]
                 if len(response) == 0:
                     break
-                barDict[indentifier] = build_bar(response.pop(0), self.__frequency)
+                barDict[indentifier] = build_bar(response.pop(-1), self.__frequency)
 
             if len(barDict) == 0:
                 break

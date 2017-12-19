@@ -3,12 +3,15 @@ from pyalgotrade import broker
 from pyalgotrade.bar import Frequency
 from pyalgotrade.technical import ma
 from pyalgotrade.technical import cross
-from pyalgotrade import plotter
+#from pyalgotrade import plotter
 from pyalgotrade.stratanalyzer import returns
-from barfeed.barfeed_http import LiveFeed
-from huobi.livebroker import LiveBroker
+from liveApi.livebarfeed import LiveFeed
+from liveApi.livebroker import LiveBroker
 
-COIN_TYPE='btc'
+COIN_TYPE='btcusdt'
+K_PERIOD=60
+REQ_DELAY = 0
+
 #COIN_TYPE='ltc'
 
 class MyStrategy(strategy.BaseStrategy):
@@ -77,7 +80,7 @@ class MyStrategy(strategy.BaseStrategy):
 
 def run_strategy():
     # Load the yahoo feed from the CSV file
-    feed = LiveFeed([COIN_TYPE], Frequency.MINUTE*5, 5)
+    feed = LiveFeed([COIN_TYPE], Frequency.MINUTE*K_PERIOD, REQ_DELAY)
 
     # commission
 #    broker_commission = broker.backtesting.TradePercentage(0.002)

@@ -17,8 +17,8 @@
 """
 .. moduleauthor:: Gabriel Martin Becedillas Ruiz <gabriel.becedillas@gmail.com>
 """
-from Util import *
-import HuobiService as hapi
+#from pyalgotrade.Util import *
+from commonTrade import tradeApi
 
 from datetime import *
 
@@ -40,10 +40,10 @@ class AccountBalance(object):
         self.__instrument = instrument
 
     def getUSDAvailable(self):
-        return float(self.__jsonDict["available_cny_display"])
+        return float(self.__jsonDict["available_money"])
 
     def getBTCAvailable(self):
-        return float(self.__jsonDict["available_%s_display"%self.__instrument])
+        return float(self.__jsonDict["available_coin"])
 
 
 class Order(object):
@@ -105,9 +105,6 @@ class UserTransaction(object):
 
 
 class HuobiClient(object):
-    COIN_BTC = 1
-    COIN_LTC = 2
-    MAP={'ltc':COIN_LTC,'btc':COIN_BTC}
     USER_AGENT = "PyAlgoTrade"
     REQUEST_TIMEOUT = 30
 
@@ -116,10 +113,12 @@ class HuobiClient(object):
 
     def __init__(self, instrument):
         self.__instrument = instrument
-        self.__coin = HuobiClient.MAP.get(self.__instrument)
+        self.__coin = instrument
+
         if self.__coin is None:
-            raise Exception("Invalid intrument %s, only support %s"%(instrument,self.MAP.keys()))
-        print('coin:%d'%self.__coin)
+            raise Exception("instrument is None")
+        print('coin:%s'%self.__coin)
+        self.__api = tradeApi()
         self.__id = 0;
         self.__orders = []
 
@@ -128,11 +127,11 @@ class HuobiClient(object):
         return self.__id
 
     def getAccountBalance(self):
-        ret = hapi.getAccountInfo(ACCOUNT_INFO)
+        ret = self.__api.getAccountInfo()
         return AccountBalance(ret, self.__instrument)
 
     def getOpenOrders(self):
-        ret = hapi.getOrders(self.__coin, GET_ORDERS)
+        ret = self.__api.getOrders(self.__coin)
         self.__orders = [d['id'] for d in ret]
         return [Order(d) for d in ret]
         
@@ -140,7 +139,7 @@ class HuobiClient(object):
         print("cancelOrder:%s"%orderId)
         self.__orders.remove(orderId)
         return
-        ret = hapi.cancelOrder(self.__coin, orderId, CANCEL_ORDER)
+        ret = self.__api.cancelOrder(self.__coin, orderId, CANCEL_ORDER)
         if ret['result'] != "success":
             raise Exception("Failed to cancel order")
 
@@ -149,7 +148,7 @@ class HuobiClient(object):
         amount = round(quantity, 4)
         ret = {'id':self.__ID()}
         '''
-        ret = hapi.buy(self.__coin, str(price), str(amount), None, None, BUY)
+        ret = self.__api.buyLimit(self.__coin, str(price), str(amount), None, None, BUY)
         if ret['result'] != 'success':
             return None
         '''
@@ -163,7 +162,7 @@ class HuobiClient(object):
         amount = round(quantity, 4)
         ret = {'id':self.__ID()}
         '''
-        ret = hapi.sell(self.__coin, str(price), str(amount), None, str(tradeid), SELL)
+        ret = self.__api.sellLimit(self.__coin, str(price), str(amount), None, str(tradeid), SELL)
         if ret['result'] != 'success':
             return None
         '''
@@ -177,7 +176,7 @@ class HuobiClient(object):
         sid = self.__ID()
         dt = datetime.now()
         for oid in self.__orders:
-            #ret = hapi.getOrderInfo(self.__coin, oid, ORDER_INFO)
+            #ret = self.__api.getOrderInfo(self.__coin, oid, ORDER_INFO)
             ret = {'status': 2, 'fee': '0.002', 'order_amount': '1', 'vot': '0.00', 'order_price': '23902.73', 'id': oid, 'total': '0.00', 'type': 1, 'processed_price': '23902.73', 'processed_amount': '0.998'}
             if ret.get('id') is not None:
                 trans = UserTransaction(ret, sid)
