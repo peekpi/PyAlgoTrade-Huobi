@@ -30,23 +30,15 @@ from pyalgotrade import resamplebase
 import pyalgotrade.logger
 from pyalgotrade.utils import dt
 import commonApi as api
+import liveUtils
 
 
 logger = pyalgotrade.logger.getLogger("xignite")
 
 
-def utcnow():
-    return dt.as_utc(datetime.datetime.utcnow())
-
-def timestamp_to_DateTimeLocal(timestamp):
-    return datetime.datetime.fromtimestamp(timestamp)
-
-def utcToLocal(utcDatetime):
-    return datetime.datetime.fromtimestamp(dt.datetime_to_timestamp(utcDatetime))
-
 class liveBar(bar.BasicBar):
     def __init__(self, barDict, frequency):
-        self.__DateTimeLocal = timestamp_to_DateTimeLocal(barDict["Timestamp"])
+        self.__DateTimeLocal = liveUtils.timestamp_to_DateTimeLocal(barDict["Timestamp"])
         super(liveBar, self).__init__(dt.timestamp_to_datetime(barDict["Timestamp"]), barDict["Open"], barDict["High"], barDict["Low"], barDict["Close"], barDict["Volume"], None, frequency)
     def getDateTimeLocal(self):
         return self.__DateTimeLocal
@@ -60,8 +52,8 @@ class PollingThread(threading.Thread):
         # Wait until getNextCallDateTime checking for cancelation every 0.5 second.
         nextCall = self.getNextCallDateTime()
 #        nextCall = self.getNextCallDateTime() - datetime.timedelta(seconds=3600)
-        print("----nextTime:%s"%utcToLocal(nextCall))
-        while not self.__stopped and utcnow() < nextCall:
+        print("----nextTime:%s"%liveUtils.utcToLocal(nextCall))
+        while not self.__stopped and liveUtils.utcnow() < nextCall:
             time.sleep(0.5)
 
     def stop(self):
@@ -121,7 +113,7 @@ class GetBarThread(PollingThread):
         self.__updateNextBarClose()
 
     def __updateNextBarClose(self):
-        self.__nextBarClose = resamplebase.build_range(utcnow(), self.__frequency).getEnding()
+        self.__nextBarClose = resamplebase.build_range(liveUtils.utcnow(), self.__frequency).getEnding()
 
     def getNextCallDateTime(self):
         return self.__nextBarClose + self.__apiCallDelay
@@ -249,7 +241,7 @@ class LiveFeed(barfeed.BaseBarFeed):
     # barfeed.BaseBarFeed interface
 
     def getCurrentDateTime(self):
-        return utcnow()
+        return liveUtils.utcnow()
 
     def barsHaveAdjClose(self):
         return False

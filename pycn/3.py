@@ -9,7 +9,7 @@ from liveApi.livebarfeed import LiveFeed
 from liveApi.livebroker import LiveBroker
 
 COIN_TYPE='btcusdt'
-K_PERIOD=60
+K_PERIOD=1
 REQ_DELAY = 0
 
 #COIN_TYPE='ltc'
@@ -48,11 +48,11 @@ class MyStrategy(strategy.BaseStrategy):
     def onBars(self, bars):
         # Wait for enough bars to be available to calculate a SMA.
         bar = bars[self.__instrument]
-        print("%s:%s: close:%.2f"%(self.__instrument, bar.getDateTime(), bar.getPrice()))
         if self.getFeed().isHistory():
             return
         if self.__sma[60][-1] is None:
             return
+        print("%s:%s: close:%.2f"%(self.__instrument, bar.getDateTimeLocal(), bar.getPrice()))
 
         bar = bars[self.__instrument]
         if self.__position is None:

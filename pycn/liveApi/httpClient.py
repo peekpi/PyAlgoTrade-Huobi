@@ -25,6 +25,19 @@ from datetime import *
 from pyalgotrade.utils import dt
 import time
 
+def tryForever(func):
+    def forever(*args, **kwargs):
+        while True:
+            try:
+                return func(*args, **kwargs)
+            except Exception, e:
+                print('')
+                print('')
+                print(' Exception: %s => %s'%(func.__name__, e.message)) 
+                print('')
+                print('')
+                continue
+    return forever
 
 def str2datetime(s):
     return datetime.fromtimestamp(int(s))
@@ -126,10 +139,12 @@ class HuobiClient(object):
         self.__id += 1
         return self.__id
 
+    @tryForever
     def getAccountBalance(self):
         ret = self.__api.getAccountInfo()
         return AccountBalance(ret, self.__instrument)
 
+    @tryForever
     def getOpenOrders(self):
         ret = self.__api.getOrders(self.__coin)
         self.__orders = [d['id'] for d in ret]
@@ -154,7 +169,7 @@ class HuobiClient(object):
         '''
         self.__orders.append(ret['id'])
         dic={'id':ret['id'], 'type':1, 'order_price':price, 'order_amount':amount, 'order_time':time.time()}
-        print("buyLimit:%s"%dic)
+        print("<<buyLimit:%s"%dic)
         return Order(dic)
 
     def sellLimit(self, limitPrice, quantity):
@@ -168,13 +183,13 @@ class HuobiClient(object):
         '''
         self.__orders.append(ret['id'])
         dic={'id':ret['id'], 'type':2, 'order_price':price, 'order_amount':amount, 'order_time':time.time()}
-        print("sellLimit:%s"%dic)
+        print(">>sellLimit:%s"%dic)
         return Order(dic)
 
     def getUserTransactions(self, transactionType=None):
         l = []
         sid = self.__ID()
-        dt = datetime.now()
+        dt = datetime.utcnow()
         for oid in self.__orders:
             #ret = self.__api.getOrderInfo(self.__coin, oid, ORDER_INFO)
             ret = {'status': 2, 'fee': '0.002', 'order_amount': '1', 'vot': '0.00', 'order_price': '23902.73', 'id': oid, 'total': '0.00', 'type': 1, 'processed_price': '23902.73', 'processed_amount': '0.998'}

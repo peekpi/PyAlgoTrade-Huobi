@@ -42,7 +42,6 @@ def build_order_from_open_order(openOrder, instrumentTraits):
     ret.setState(broker.Order.State.ACCEPTED)
     return ret
 
-
 class TradeMonitor(threading.Thread):
     POLL_FREQUENCY = 2
 
