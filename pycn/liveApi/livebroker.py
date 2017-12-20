@@ -47,12 +47,16 @@ class TradeMonitor(threading.Thread):
 
     # Events
     ON_USER_TRADE = 1
+    # Events Order
+    ORDER_DEL
+    ORDER_ADD
 
     def __init__(self, httpClient):
         super(TradeMonitor, self).__init__()
-        self.__lastTradeId = -1
         self.__httpClient = httpClient
         self.__queue = Queue.Queue()
+        self.__queueOrder = Queue.Queue()
+        self.__ordersId = []
         self.__stop = False
         print("livebroker.TradeMonitor.__init__: POLL_FREQUENCY is %d"%TradeMonitor.POLL_FREQUENCY)
         print("common.btc_symbol:%s"%common.btc_symbol)
@@ -63,30 +67,30 @@ class TradeMonitor(threading.Thread):
             time.sleep(1)
             sleepTime += 1
 
-    def _getNewTrades(self):
-        userTrades = self.__httpClient.getUserTransactions()
+    def __syncOrderId(self):
+        try:
+            while not self.__queueOrder.empty():
+                event, oid = self.__queueOrder.get_nowait()
+                if event == TradeMonitor.ORDER_ADD:
+                    self.__ordersId.append(oid)
+                else:
+                    self.__ordersId.remove(oid)
+        except:
+            pass
+    def addOrderIdSafety(self, oid):
+        self.__queueOrder.put((TradeMonitor.ORDER_ADD, oid))
+    def delOrderIdSafety(self. oid):
+        self.__queueOrder.put((TradeMonitor.ORDER_DEL, oid))
 
-        # Get the new trades only.
-        ret = []
-        for userTrade in userTrades:
-            if userTrade.getId() > self.__lastTradeId:
-                ret.append(userTrade)
-            else:
-                break
-        # Older trades first.
-        ret.reverse()
-        return ret
+    def _getNewTrades(self):
+        self.__syncOrderId()
+        return self.__httpClient.getUserTransactions(self.__ordersId)
 
     def getQueue(self):
         return self.__queue
 
     def start(self):
         trades = self._getNewTrades()
-        # Store the last trade id since we'll start processing new ones only.
-        if len(trades):
-            self.__lastTradeId = trades[-1].getId()
-            common.logger.info("Last trade found: %d" % (self.__lastTradeId))
-
         super(TradeMonitor, self).start()
 
     def run(self):
@@ -94,7 +98,6 @@ class TradeMonitor(threading.Thread):
             try:
                 trades = self._getNewTrades()
                 if len(trades):
-                    self.__lastTradeId = trades[-1].getId()
                     common.logger.info("%d new trade/s found" % (len(trades)))
                     self.__queue.put((TradeMonitor.ON_USER_TRADE, trades))
             except Exception, e:
@@ -146,11 +149,13 @@ class LiveBroker(broker.Broker):
     def _registerOrder(self, order):
         assert(order.getId() not in self.__activeOrders)
         assert(order.getId() is not None)
+        self.__tradeMonitor.addOrderIdSafety(order.getId())
         self.__activeOrders[order.getId()] = order
 
     def _unregisterOrder(self, order):
         assert(order.getId() in self.__activeOrders)
         assert(order.getId() is not None)
+        self.__tradeMonitor.delOrderIdSafety(order.getId())
         del self.__activeOrders[order.getId()]
 
     def refreshAccountBalance(self):
@@ -225,7 +230,7 @@ class LiveBroker(broker.Broker):
                     eventType = broker.OrderEvent.Type.PARTIALLY_FILLED
                 self.notifyOrderEvent(broker.OrderEvent(order, eventType, orderExecutionInfo))
             else:
-                common.logger.info("Trade %d refered to order %d that is not active" % (trade.getId(), trade.getOrderId()))
+                common.logger.info("Trade refered to order %d that is not active" % (trade.getOrderId()))
         return ret
 
     # BEGIN observer.Subject interface
