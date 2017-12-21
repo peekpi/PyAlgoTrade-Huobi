@@ -23,6 +23,7 @@ import json
 
 import time
 import datetime
+from liveUtils import *
 
 from hbsdk import ApiClient, ApiError
 
@@ -37,12 +38,13 @@ def getKLineBar(identifier, endTimestamp, period, length = 1):
         return None
     del klines[0]
     x = klines[0]
-    print(x.id)
-    print(endTimestamp)
+    print('recv:    %s'%timestamp_to_DateTimeLocal(x.id))
+    print('ecpect:  %s'%timestamp_to_DateTimeLocal(endTimestamp))
     print(endTimestamp == x.id)
     if x.id < endTimestamp:
         return None
     if x.id > endTimestamp:
+        print('-----------xxxx exit')
         exit()
 
     return [ {

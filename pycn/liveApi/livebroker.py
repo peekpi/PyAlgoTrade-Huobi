@@ -25,9 +25,7 @@ import Queue
 from pyalgotrade import broker
 #import httpclient
 from pyalgotrade.bitstamp import common
-
-from httpClient import HuobiClient
-
+import liveUtils
 
 def build_order_from_open_order(openOrder, instrumentTraits):
     if openOrder.isBuy():
@@ -48,8 +46,8 @@ class TradeMonitor(threading.Thread):
     # Events
     ON_USER_TRADE = 1
     # Events Order
-    ORDER_DEL
-    ORDER_ADD
+    ORDER_DEL = 1
+    ORDER_ADD = 2
 
     def __init__(self, httpClient):
         super(TradeMonitor, self).__init__()
@@ -79,9 +77,10 @@ class TradeMonitor(threading.Thread):
             pass
     def addOrderIdSafety(self, oid):
         self.__queueOrder.put((TradeMonitor.ORDER_ADD, oid))
-    def delOrderIdSafety(self. oid):
+    def delOrderIdSafety(self, oid):
         self.__queueOrder.put((TradeMonitor.ORDER_DEL, oid))
 
+    @liveUtils.tryForever
     def _getNewTrades(self):
         self.__syncOrderId()
         return self.__httpClient.getUserTransactions(self.__ordersId)
@@ -90,7 +89,6 @@ class TradeMonitor(threading.Thread):
         return self.__queue
 
     def start(self):
-        trades = self._getNewTrades()
         super(TradeMonitor, self).start()
 
     def run(self):
@@ -136,11 +134,12 @@ class LiveBroker(broker.Broker):
 
     QUEUE_TIMEOUT = 0.01
 
-    def __init__(self, instrument):
+    def __init__(self, instrument, TradeClient):
         super(LiveBroker, self).__init__()
+        self.__symbol = instrument
         common.btc_symbol = instrument
         self.__stop = False
-        self.__httpClient = HuobiClient(instrument)
+        self.__httpClient = TradeClient
         self.__tradeMonitor = TradeMonitor(self.__httpClient)
         self.__cash = 0
         self.__shares = {}
@@ -158,6 +157,7 @@ class LiveBroker(broker.Broker):
         self.__tradeMonitor.delOrderIdSafety(order.getId())
         del self.__activeOrders[order.getId()]
 
+    @liveUtils.tryForever
     def refreshAccountBalance(self):
         """Refreshes cash and BTC balance."""
 
@@ -178,6 +178,7 @@ class LiveBroker(broker.Broker):
 
         self.__stop = False  # No errors. Keep running.
 
+    @liveUtils.tryForever
     def refreshOpenOrders(self):
         self.__stop = True  # Stop running in case of errors.
         common.logger.info("Retrieving open orders.")
@@ -294,6 +295,7 @@ class LiveBroker(broker.Broker):
     def getActiveOrders(self, instrument=None):
         return self.__activeOrders.values()
 
+    @liveUtils.tryForever
     def submitOrder(self, order):
         if order.isInitial():
             # Override user settings based on Bitstamp limitations.
@@ -340,6 +342,7 @@ class LiveBroker(broker.Broker):
     def createStopLimitOrder(self, action, instrument, stopPrice, limitPrice, quantity):
         raise Exception("Stop limit orders are not supported")
 
+    @liveUtils.tryForever
     def cancelOrder(self, order):
         activeOrder = self.__activeOrders.get(order.getId())
         if activeOrder is None:

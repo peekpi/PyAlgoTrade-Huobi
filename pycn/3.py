@@ -8,6 +8,8 @@ from pyalgotrade.stratanalyzer import returns
 from liveApi.livebarfeed import LiveFeed
 from liveApi.livebroker import LiveBroker
 
+from hbClient import hbTradeClient as hbClient
+
 COIN_TYPE='btcusdt'
 K_PERIOD=1
 REQ_DELAY = 0
@@ -52,15 +54,13 @@ class MyStrategy(strategy.BaseStrategy):
             return
         if self.__sma[60][-1] is None:
             return
-        print("%s:%s: close:%.2f"%(self.__instrument, bar.getDateTimeLocal(), bar.getPrice()))
+        print("++ %s:%s: close:%.2f"%(self.__instrument, bar.getDateTimeLocal(), bar.getPrice()))
 
         bar = bars[self.__instrument]
         if self.__position is None:
             mbroker = self.getBroker();
             shares = mbroker.getCash()/bar.getPrice()*0.9;
-            shares = 1;
             self.__position = self.enterLongLimit(self.__instrument, bar.getPrice(), shares, True)
-            self.__buyCount = 0
         else:
             self.__position.exitLimit(bar.getPrice())
         return
@@ -85,7 +85,7 @@ def run_strategy():
     # commission
 #    broker_commission = broker.backtesting.TradePercentage(0.002)
 #    broker_brk = broker.backtesting.Broker(20000, feed, broker_commission)
-    liveBroker = LiveBroker(COIN_TYPE)
+    liveBroker = LiveBroker(COIN_TYPE, hbClient(COIN_TYPE))
     # Evaluate the strategy with the feed.
     myStrategy = MyStrategy(feed, COIN_TYPE, liveBroker)
     
