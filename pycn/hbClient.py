@@ -62,8 +62,15 @@ class hbTradeClient(TradeClientBase):
     # --
     @exceDebug
     def getOpenOrders(self):
+        
         print('--getOpenOrders: []')
-        return []
+        return [hbTradeOrder({
+            'id': ID(),
+            'isBuy' : True,
+            'price' : limitPrice,
+            'amount' : quantity,
+            'time' : datetime.datetime.utcnow(),
+        })]
 
     # --
     @exceDebug
