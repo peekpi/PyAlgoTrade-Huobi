@@ -33,7 +33,7 @@ def getKLineBar(identifier, endTimestamp, period, length = 1):
     print('-------getKLine:%s %s %s %s'%(identifier, endTimestamp, period, length))
     length = length + 1 if length < 2000 else 2000
 
-    klines = client.mget('/market/history/kline', symbol=identifier, period='%dmin'%period, size=length)
+    klines = client.mget('/market/history/kline', symbol=identifier.getSymbol(), period='%dmin'%period, size=length)
     if len(klines) != length:
         return None
     del klines[0]

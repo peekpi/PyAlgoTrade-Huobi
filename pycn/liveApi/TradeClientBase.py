@@ -68,9 +68,6 @@ class TradeOrderBase(object):
 
 
 class TradeUserTransactionBase(object):
-    def __init__(self):
-        self.__datetime = dt.as_utc(datetime.datetime.utcnow())
-
     # return filled coin num, float .4
     @abc.abstractmethod
     def getBTC(self):
@@ -98,18 +95,10 @@ class TradeUserTransactionBase(object):
 
     # return time, datetime.datetime
     def getDateTime(self):
-        return self.__datetime
+        return dt.as_utc(datetime.datetime.utcnow())
 
 
 class TradeClientBase(object):
-    def __init__(self, instrument):
-        if instrument is None:
-            raise Exception("instrument is None")
-        self.__coin = instrument
-
-    def getCoinType(self):
-        return self.__coin
-
     # return class(AccountBalance)
     @abc.abstractmethod
     def getAccountBalance(self):

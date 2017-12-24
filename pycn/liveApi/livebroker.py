@@ -148,14 +148,14 @@ class LiveBroker(broker.Broker):
     def _registerOrder(self, order):
         assert(order.getId() not in self.__activeOrders)
         assert(order.getId() is not None)
-        self.__tradeMonitor.addOrderIdSafety(order.getId())
         self.__activeOrders[order.getId()] = order
+        self.__tradeMonitor.addOrderIdSafety(order.getId())
 
     def _unregisterOrder(self, order):
         assert(order.getId() in self.__activeOrders)
         assert(order.getId() is not None)
-        self.__tradeMonitor.delOrderIdSafety(order.getId())
         del self.__activeOrders[order.getId()]
+        self.__tradeMonitor.delOrderIdSafety(order.getId())
 
     @liveUtils.tryForever
     def refreshAccountBalance(self):

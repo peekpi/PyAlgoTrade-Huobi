@@ -13,6 +13,7 @@ def main():
     # get symbol:
     symbols = client.get('/v1/common/symbols')
     print(symbols)
+    exit()
     # get user info:
     userinfo = client.get('/v1/users/user')
     print(userinfo)

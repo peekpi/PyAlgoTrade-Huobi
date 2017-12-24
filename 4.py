@@ -95,7 +95,7 @@ class MyStrategy(strategy.BacktestingStrategy):
         # Check if we have to exit the position.
 #        elif not self.__position.exitActive() and cross.cross_below(self.__prices, self.__sma[10]) > 0:
         elif not self.__position.exitActive() and (self.__position.getReturn() > 0.3 or cross.cross_below(self.__sma[10], self.__sma[30]) > 0):
-            list(self.getActivePositions())[0].exitMarket()
+            self.__position.exitMarket()
             self.__jsl[-1].append(self.__si-1)
             #self.__position.exitMarket()
 #        print("PnL:%f ret:%f"%(_p.getPnL(True), _p.getReturn()))

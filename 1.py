@@ -62,8 +62,7 @@ class MyStrategy(strategy.BacktestingStrategy):
                 print("buy%.2f in %.2f use %d"%(shares, bar.getPrice(), mbroker.getCash()))
                 self.__position = self.enterLong(self.__instrument, shares, True)
         # Check if we have to exit the position.
-        elif not self.__position.exitActive() and cross.cross_below(self.__prices, self.__sma[10]) > 0:
-#        elif not self.__position.exitActive() and cross.cross_below(self.__sma[10], self.__sma[30]) > 0:
+        elif not self.__position.exitActive() and cross.cross_below(self.__sma[10], self.__sma[30]) > 0:
             self.__position.exitMarket()
 
 

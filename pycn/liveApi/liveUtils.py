@@ -1,5 +1,6 @@
 from pyalgotrade.utils import dt
 from datetime import datetime
+import time
 import pytz
 
 localTz = pytz.timezone('Asia/Shanghai')
@@ -13,25 +14,34 @@ def timestamp_to_DateTimeLocal(timestamp):
 def utcToLocal(utcDatetime):
     return timestamp_to_DateTimeLocal(dt.datetime_to_timestamp(utcDatetime))
 
-def priceRound(price):
+def PriceRound(price):
     return round(price, 2)
 
-def priceCoin(coin):
+def CoinRound(coin):
     return round(coin, 4)
 
-import time
+def ErrorShow(msg):
+    __len = len(msg)
+    if __len > 100:
+        __len = 100
+    print('--'*__len)
+    print('-')
+    print('-  %s'%(msg))
+    print('-')
+    print('--'*__len)
+
+import traceback
+
 def tryForever(func):
     def forever(*args, **kwargs):
         while True:
             try:
                 return func(*args, **kwargs)
             except Exception, e:
-                print('')
-                print('')
-                print(' Exception: %s => %s'%(func.__name__, e.message)) 
-                print('')
-                print('')
-                time.sleep(5)
+                print('----------traceback.print_exc:')
+                traceback.print_exc()
+                ErrorShow('Exception: %s => %s'%(func.__name__, e.message))
+                time.sleep(1)
                 continue
     return forever
 

@@ -9,8 +9,9 @@ from liveApi.livebarfeed import LiveFeed
 from liveApi.livebroker import LiveBroker
 
 from hbClient import hbTradeClient as hbClient
+from hbClient import hbCoinType
 
-COIN_TYPE='btcusdt'
+COIN_TYPE=hbCoinType('ltc', 'usdt')
 K_PERIOD=1
 REQ_DELAY = 0
 
@@ -33,7 +34,7 @@ class MyStrategy(strategy.BaseStrategy):
     
     def onEnterOk(self, position):
         execInfo = position.getEntryOrder().getExecutionInfo()
-        self.info("BUY at $%.2f" % (execInfo.getPrice()))
+        self.info("BUY at $%.2f %.4f" % (execInfo.getPrice(), execInfo.getQuantity()))
 
     def onEnterCanceled(self, position):
         self.__position = None
@@ -54,16 +55,19 @@ class MyStrategy(strategy.BaseStrategy):
             return
         if self.__sma[60][-1] is None:
             return
-        print("++ %s:%s: close:%.2f"%(self.__instrument, bar.getDateTimeLocal(), bar.getPrice()))
+        print("onBars %s:%s: close:%.2f"%(self.__instrument, bar.getDateTimeLocal(), bar.getPrice()))
 
         bar = bars[self.__instrument]
+        '''
         if self.__position is None:
             mbroker = self.getBroker();
-            shares = mbroker.getCash()/bar.getPrice()*0.9;
+            #shares = mbroker.getCash()/bar.getPrice()*0.9;
+            shares = 0.001
             self.__position = self.enterLongLimit(self.__instrument, bar.getPrice(), shares, True)
         else:
             self.__position.exitLimit(bar.getPrice())
         return
+        '''
             
         # If a position was not opened, check if we should enter a long position.
         if self.__position is None:
@@ -73,9 +77,8 @@ class MyStrategy(strategy.BaseStrategy):
 #                self.__position = self.marketOrder(self.__instrument, self.__shares)
                 self.__position = self.enterLongLimit(self.__instrument, bar.getPrice(), shares, True)
         # Check if we have to exit the position.
-#        elif not self.__position.exitActive() and cross.cross_below(self.__prices, self.__sma[10]) > 0:
         elif not self.__position.exitActive() and cross.cross_below(self.__sma[10], self.__sma[30]) > 0:
-            self.__position.exitMarket()
+            self.__position.exitLimit(bar.getPrice())
 
 
 def run_strategy():

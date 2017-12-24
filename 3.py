@@ -8,6 +8,11 @@ from pyalgotrade import plotter
 from pyalgotrade.stratanalyzer import returns
 from pyalgotrade.bitstamp import common
 
+class F():
+    def __str__(self):
+        return 'btc'
+coin = F()
+
 class floatBroker(broker.backtesting.Broker):
     def getInstrumentTraits(self, instrument):
         return common.BTCTraits()
@@ -72,14 +77,14 @@ class MyStrategy(strategy.BacktestingStrategy):
 def run_strategy():
     # Load the yahoo feed from the CSV file
     feed = GenericBarFeed(Frequency.DAY, None, None)
-    feed.addBarsFromCSV("orcl", "2000.csv")
+    feed.addBarsFromCSV(coin, "2000.csv")
 
     # commission
     broker_commission = broker.backtesting.TradePercentage(0.002)
     broker_brk = floatBroker(50000, feed, broker_commission)
 #    broker_brk = broker.backtesting.Broker(50000, feed)
     # Evaluate the strategy with the feed.
-    myStrategy = MyStrategy(feed, "orcl", broker_brk)
+    myStrategy = MyStrategy(feed, coin, broker_brk)
     
     returnsAnalyzer = returns.Returns()
     myStrategy.attachAnalyzer(returnsAnalyzer)
@@ -88,15 +93,15 @@ def run_strategy():
     # Attach the plotter to the strategy.
     plt = plotter.StrategyPlotter(myStrategy)
     # Include the SMA in the instrument's subplot to get it displayed along with the closing prices.
-    plt.getInstrumentSubplot("orcl").addDataSeries("SMA60", myStrategy.getSMA(60))
-    plt.getInstrumentSubplot("orcl").addDataSeries("SMA10", myStrategy.getSMA(10))
-    plt.getInstrumentSubplot("orcl").addDataSeries("SMA30", myStrategy.getSMA(30))
+    plt.getInstrumentSubplot(coin).addDataSeries("SMA60", myStrategy.getSMA(60))
+    plt.getInstrumentSubplot(coin).addDataSeries("SMA10", myStrategy.getSMA(10))
+    plt.getInstrumentSubplot(coin).addDataSeries("SMA30", myStrategy.getSMA(30))
     # Plot the simple returns on each bar.
     plt.getOrCreateSubplot("returns").addDataSeries("Simple returns", returnsAnalyzer.getReturns())
     
     
     myStrategy.run()
-    print("Final portfolio value: $%.2f %.2f %.2f" %(myStrategy.getBroker().getEquity(), myStrategy.getBroker().getCash(), myStrategy.getBroker().getShares('orcl')))
+    print("Final portfolio value: $%.2f %.2f %.2f" %(myStrategy.getBroker().getEquity(), myStrategy.getBroker().getCash(), myStrategy.getBroker().getShares(coin)))
 #    myStrategy.info("Final portfolio value: $%.2f" % myStrategy.getResult())
 
     # Plot the strategy.
