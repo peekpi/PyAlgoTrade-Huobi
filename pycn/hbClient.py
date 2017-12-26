@@ -4,8 +4,8 @@ from pyalgotrade.utils import dt
 
 from hbsdk import ApiClient, ApiError
 
-API_KEY = '29dcf8f8-94118ccd-f6bc8ad0-33e70'
-API_SECRET = '9dcd7cd8-6847eea7-d4464751-a9493'
+API_KEY = 'API_KEY'
+API_SECRET = 'API_SECRET'
 
 def Str2float(func):
     def waper(*args, **kwargs):

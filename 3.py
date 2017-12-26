@@ -10,7 +10,7 @@ from pyalgotrade.bitstamp import common
 
 class F():
     def __str__(self):
-        return 'btc'
+        return 'btcusdt'
 coin = F()
 
 class floatBroker(broker.backtesting.Broker):

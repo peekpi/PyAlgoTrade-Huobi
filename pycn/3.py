@@ -12,7 +12,7 @@ from hbClient import hbTradeClient as hbClient
 from hbClient import hbCoinType
 
 COIN_TYPE=hbCoinType('ltc', 'usdt')
-K_PERIOD=1
+K_PERIOD=60
 REQ_DELAY = 0
 
 #COIN_TYPE='ltc'

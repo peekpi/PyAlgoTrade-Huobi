@@ -1,0 +1,57 @@
+### 读我
+
+居然有人看，那就写一下吧。  
+这个工程是基于*pyalogtrade 0.18*的，我做了火币pro实时交易的对接，放github只是方便同步，不过既然有人看，那就简单写一下说明。
+
+工程分两个部分：回测和实盘。
+
+#### 回测
+对应源码：
+
+- p3.py
+- 3.py
+
+回测测试：
+
+1. 获取历史K线：`python p3.py`
+2. 根据策略回测：`python 3.py`
+
+#### 实盘
+对应源码：
+
+- pycn/liveApi
+- pycn/3.py
+- pycn/hbClient.py
+- pycn/hbsdk.py
+
+实盘测试：`python 3.py`
+
+![回测图][examplePng]
+
+
+>> - 实盘只支持单币种交易,如BTCUSDT、LTCUSDT等等
+>> - 其余部分代码都是开发及调试的中间产物，有时间会整理出一个简洁版本。
+>> - 有一些接口实现的不是很好，不过功能上是没问题的，后续会慢慢更新。
+
+### 安装指南
+
+以ubuntu为例：
+
+1. 安装python 2.7：  
+`sudo apt-get install python`
+2. 安装pyalgotrade  
+`sudo apt-get install pyalgotrade`
+3. 下载上述提到的几个文件，并按照测试步骤测试。
+
+>> [pyalgotrade官网][pat_official]  
+>> [pyalgotrade官方文档][pat_official_doc]
+
+[pat_official]: http://gbeced.github.io/pyalgotrade
+[pat_official_doc]: http://gbeced.github.io/pyalgotrade/docs/v0.18/html
+[examplePng]: /example.png
+
+
+
+
+
+
