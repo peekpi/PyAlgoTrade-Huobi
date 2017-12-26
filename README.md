@@ -16,6 +16,9 @@
 1. 获取历史K线：`python p3.py`
 2. 根据策略回测：`python 3.py`
 
+BTCUSDT回测图：
+![回测图][examplePng]
+
 #### 实盘
 对应源码：
 
@@ -26,8 +29,7 @@
 
 实盘测试：`python 3.py`
 
-![回测图][examplePng]
-
+> ***注意，填入正确的API KEY后，运行这个脚本可能会造成财产损失！***
 
 >> - 实盘只支持单币种交易,如BTCUSDT、LTCUSDT等等
 >> - 其余部分代码都是开发及调试的中间产物，有时间会整理出一个简洁版本。
@@ -43,8 +45,8 @@
 `sudo apt-get install pyalgotrade`
 3. 下载上述提到的几个文件，并按照测试步骤测试。
 
->> [pyalgotrade官网][pat_official]  
->> [pyalgotrade官方文档][pat_official_doc]
+> [pyalgotrade官网][pat_official]  
+> [pyalgotrade官方文档][pat_official_doc]
 
 [pat_official]: http://gbeced.github.io/pyalgotrade
 [pat_official_doc]: http://gbeced.github.io/pyalgotrade/docs/v0.18/html
