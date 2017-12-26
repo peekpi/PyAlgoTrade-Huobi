@@ -43,6 +43,7 @@ class hbTradeOrder(TradeOrderBase):
     def getDateTime(self):
         return dt.timestamp_to_datetime(int(self.__obj['created-at'])/1000)
 
+# GET /v1/order/orders/{order-id}/matchresults
 class hbTradeUserTransaction(TradeUserTransactionBase):
     def __init__(self, obj):
         self.__obj = obj
@@ -51,7 +52,8 @@ class hbTradeUserTransaction(TradeUserTransactionBase):
         return self.__obj['field-amount']
     @Str2float
     def getBTCUSD(self):
-        return self.__obj['field-cash-amount']
+        #return self.__obj['field-cash-amount']
+        return self.__obj['price']
     @Str2float
     def getFee(self):
         return self.__obj['field-fees']

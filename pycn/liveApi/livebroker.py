@@ -27,6 +27,12 @@ from pyalgotrade import broker
 from pyalgotrade.bitstamp import common
 import liveUtils
 
+class BTCTraits(broker.InstrumentTraits):
+    def roundQuantity(self, quantity):
+        return round(quantity, 4)
+
+common.BTCTraits = BTCTraits
+
 def build_order_from_open_order(openOrder, instrumentTraits):
     if openOrder.isBuy():
         action = broker.Order.Action.BUY
