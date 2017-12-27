@@ -18,6 +18,7 @@
 
 BTCUSDT回测图：
 ![回测图][examplePng]
+> 这只是一个简单的策略，回测效果好的原因是BTC一直在涨。。。
 
 #### 实盘
 对应源码：
@@ -39,10 +40,10 @@ BTCUSDT回测图：
 
 以ubuntu为例：
 
-1. 安装python 2.7：  
-`sudo apt-get install python`
+1. 安装python 2.7和python-pip：  
+`sudo apt-get install python python-pip`
 2. 安装pyalgotrade  
-`sudo apt-get install pyalgotrade`
+`sudo pip install pyalgotrade`
 3. 下载上述提到的几个文件，并按照测试步骤测试。
 
 > [pyalgotrade官网][pat_official]  
