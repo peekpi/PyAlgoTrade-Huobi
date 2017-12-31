@@ -6,14 +6,13 @@
 工程分两个部分：回测和实盘。
 
 #### 回测
-对应源码：
+源码位置：
 
-- p3.py
-- 3.py
+- RegressionTest
 
 回测测试：
 
-1. 获取历史K线：`python p3.py`
+1. 获取历史K线：`python getKlines.py`
 2. 根据策略回测：`python 3.py`
 
 BTCUSDT回测图：
@@ -21,19 +20,15 @@ BTCUSDT回测图：
 > 这只是一个简单的策略，回测效果好的原因是BTC一直在涨。。。
 
 #### 实盘
-对应源码：
+源码位置：
 
-- pycn/liveApi
-- pycn/3.py
-- pycn/hbClient.py
-- pycn/hbsdk.py
+- huobi
 
 实盘测试：`python 3.py`
 
 > ***注意，填入正确的API KEY后，运行这个脚本可能会造成财产损失！***
 
 >> - 实盘只支持单币种交易,如BTCUSDT、LTCUSDT等等
->> - 其余部分代码都是开发及调试的中间产物，有时间会整理出一个简洁版本。
 >> - 有一些接口实现的不是很好，不过功能上是没问题的，后续会慢慢更新。
 
 ### 安装指南
