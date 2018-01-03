@@ -31,18 +31,19 @@ def getKLineBar(identifier, endTimestamp, period, length = 1):
     klines = client.mget('/market/history/kline', symbol=identifier.getSymbol(), period='%dmin'%period, size=length)
     if len(klines) != length:
         return None
-    if timestamp() - endTimestamp < 30:
+    if timestamp() - endTimestamp > period*60+30 and length < 100:
+        del klines[1]
+    else:
         del klines[0]
     x = klines[0]
     f = timestamp_to_DateTimeLocal
     print('cur: %s recv: %s ecpect: %s'%(f(timestamp()), f(x.id), f(endTimestamp)))
-    print('ecpect:  %s'%timestamp_to_DateTimeLocal(endTimestamp))
     print(endTimestamp == x.id)
     if x.id < endTimestamp:
         return None
     if x.id > endTimestamp:
-        print('-----------xxxx exit')
-        exit()
+        klines[0].id = endTimestamp
+        print('-----------fuck!')
 
     return [ {
               "Timestamp":k.id,

@@ -2,6 +2,11 @@ from pyalgotrade.utils import dt
 from datetime import datetime
 import time
 import pytz
+'''
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+'''
 
 localTz = pytz.timezone('Asia/Shanghai')
 
@@ -29,7 +34,7 @@ def ErrorShow(msg):
         __len = 100
     print('--'*__len)
     print('-')
-    print('-  %s'%(msg))
+    print(msg.encode('utf8'))
     print('-')
     print('--'*__len)
 
