@@ -160,6 +160,7 @@ class hbTradeClient(TradeClientBase):
     # --
     #@exceDebug
     def sellLimit(self, limitPrice, quantity):
+        quantity *= 0.998
         print('--sellLimit:%s %s'%(limitPrice, quantity))
         orderInfo = self.postOrder(limitPrice, quantity, hbOrderType.SellLimit)
         return hbTradeOrder(orderInfo)
