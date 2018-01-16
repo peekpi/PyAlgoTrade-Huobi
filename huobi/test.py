@@ -61,7 +61,7 @@ class MyStrategy(strategy.BaseStrategy):
         if self.__position is None:
             mbroker = self.getBroker();
             #shares = mbroker.getCash()/bar.getPrice()*0.9;
-            shares = 0.0002
+            shares = 0.002
             self.__position = self.enterLongLimit(self.__instrument, bar.getPrice(), shares, True)
         else:
             self.__position.exitLimit(bar.getPrice())
