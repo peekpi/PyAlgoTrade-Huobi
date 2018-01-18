@@ -23,9 +23,11 @@ import time
 import Queue
 
 from pyalgotrade import broker
-#import httpclient
 from pyalgotrade.bitstamp import common
 import liveUtils
+import liveLogger
+
+logger = liveLogger.getLiveLogger("Broker")
 
 class BTCTraits(broker.InstrumentTraits):
     def roundQuantity(self, quantity):
@@ -62,8 +64,8 @@ class TradeMonitor(threading.Thread):
         self.__queueOrder = Queue.Queue()
         self.__ordersId = []
         self.__stop = False
-        print("livebroker.TradeMonitor.__init__: POLL_FREQUENCY is %d"%TradeMonitor.POLL_FREQUENCY)
-        print("common.btc_symbol:%s"%common.btc_symbol)
+        logger.info("POLL_FREQUENCY is %d"%TradeMonitor.POLL_FREQUENCY)
+        logger.info("common.btc_symbol:%s"%common.btc_symbol)
 
     def __wait(self):
         sleepTime = 0
@@ -102,10 +104,10 @@ class TradeMonitor(threading.Thread):
             try:
                 trades = self._getNewTrades()
                 if len(trades):
-                    common.logger.info("%d new trade/s found" % (len(trades)))
+                    logger.info("%d new trade/s found" % (len(trades)))
                     self.__queue.put((TradeMonitor.ON_USER_TRADE, trades))
             except Exception, e:
-                common.logger.critical("Error retrieving user transactions", exc_info=e)
+                logger.critical("Error retrieving user transactions", exc_info=e)
             self.__wait()
 
     def stop(self):
@@ -168,36 +170,36 @@ class LiveBroker(broker.Broker):
         """Refreshes cash and BTC balance."""
 
         self.__stop = True  # Stop running in case of errors.
-        common.logger.info("Retrieving account balance.")
+        logger.info("Retrieving account balance.")
         balance = self.__httpClient.getAccountBalance()
 
         # Cash
         self.__cash = round(balance.getUSDAvailable(), 2)
-        common.logger.info("%s USD" % (self.__cash))
+        logger.info("%s USD" % (self.__cash))
         # BTC
         btc = balance.getBTCAvailable()
         if btc:
             self.__shares = {common.btc_symbol: btc}
         else:
             self.__shares = {}
-        common.logger.info("%s BTC" % (btc))
+        logger.info("%s BTC" % (btc))
 
         self.__stop = False  # No errors. Keep running.
 
     @liveUtils.tryForever
     def refreshOpenOrders(self):
         self.__stop = True  # Stop running in case of errors.
-        common.logger.info("Retrieving open orders.")
+        logger.info("Retrieving open orders.")
         openOrders = self.__httpClient.getOpenOrders()
         for openOrder in openOrders:
             self._registerOrder(build_order_from_open_order(openOrder, self.getInstrumentTraits(common.btc_symbol)))
 
-        common.logger.info("%d open order/s found" % (len(openOrders)))
+        logger.info("%d open order/s found" % (len(openOrders)))
         self.__stop = False  # No errors. Keep running.
 
     def _startTradeMonitor(self):
         self.__stop = True  # Stop running in case of errors.
-        common.logger.info("Initializing trade monitor.")
+        logger.info("Initializing trade monitor.")
         self.__tradeMonitor.start()
         self.__stop = False  # No errors. Keep running.
 
@@ -218,7 +220,7 @@ class LiveBroker(broker.Broker):
                 newFee = trade.getFee() - order.getCommissions()
                 newDateTime = trade.getDateTime()
 
-                print('--new: price:%f btc:%f fee:%s time:%s'%(newFillPrice, newQuantity, newFee, newDateTime))
+                logger.info('newTrade: price:%f btc:%f fee:%s time:%s'%(newFillPrice, newQuantity, newFee, newDateTime))
 
                 # Update cash and shares.
                 self.refreshAccountBalance()
@@ -237,7 +239,7 @@ class LiveBroker(broker.Broker):
                     eventType = broker.OrderEvent.Type.PARTIALLY_FILLED
                 self.notifyOrderEvent(broker.OrderEvent(order, eventType, orderExecutionInfo))
             else:
-                common.logger.info("Trade refered to order %d that is not active" % (trade.getOrderId()))
+                logger.info("Trade refered to order %d that is not active" % (trade.getOrderId()))
         return ret
 
     # BEGIN observer.Subject interface
@@ -249,7 +251,7 @@ class LiveBroker(broker.Broker):
 
     def stop(self):
         self.__stop = True
-        common.logger.info("Shutting down trade monitor.")
+        logger.info("Shutting down trade monitor.")
         self.__tradeMonitor.stop()
 
     def join(self):
@@ -274,7 +276,7 @@ class LiveBroker(broker.Broker):
             if eventType == TradeMonitor.ON_USER_TRADE:
                 return self._onUserTrades(eventData)
             else:
-                common.logger.error("Invalid event received to dispatch: %s - %s" % (eventType, eventData))
+                logger.error("Invalid event received to dispatch: %s - %s" % (eventType, eventData))
         except Queue.Empty:
             pass
 

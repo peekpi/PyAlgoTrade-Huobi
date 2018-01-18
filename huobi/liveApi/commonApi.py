@@ -19,13 +19,16 @@
 """
 
 from liveUtils import *
+import liveLogger
 
 from hbsdk import ApiClient, ApiError
+
+logger = liveLogger.getLiveLogger("K-Line")
 
 client = ApiClient('API_KEY', 'API_SECRET')
 
 def getKLineBar(identifier, endTimestamp, period, length = 1):
-    print('-------getKLine:%s %s %s %s'%(identifier, endTimestamp, period, length))
+    logger.info('getKLine:%s %s %s %s'%(identifier, endTimestamp, period, length))
     length = length + 1 if length < 2000 else 2000
 
     klines = client.mget('/market/history/kline', symbol=identifier.getSymbol(), period='%dmin'%period, size=length)
@@ -37,13 +40,12 @@ def getKLineBar(identifier, endTimestamp, period, length = 1):
         del klines[0]
     x = klines[0]
     f = timestamp_to_DateTimeLocal
-    print('cur: %s recv: %s ecpect: %s'%(f(timestamp()), f(x.id), f(endTimestamp)))
-    print(endTimestamp == x.id)
+    logger.info('cur: %s recv: %s ecpect: %s eq: %s'%(f(timestamp()), f(x.id), f(endTimestamp), endTimestamp == x.id))
     if x.id < endTimestamp:
         return None
     if x.id > endTimestamp:
         klines[0].id = endTimestamp
-        print('-----------fuck!')
+        logger.info('fuck!')
 
     return [ {
               "Timestamp":k.id,

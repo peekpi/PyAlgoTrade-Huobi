@@ -1,11 +1,14 @@
 from liveApi.TradeClientBase import *
 from liveApi.liveUtils import *
 from pyalgotrade.utils import dt
+from liveApi import liveLogger
 
 from hbsdk import ApiClient, ApiError
 
 from ApiKey import API_KEY
 from ApiKey import API_SECRET
+
+logger = liveLogger.getLiveLogger("hbClient")
 
 def Str2float(func):
     def waper(*args, **kwargs):
@@ -125,13 +128,13 @@ class hbTradeClient(TradeClientBase):
     def getAccountBalance(self):
         balances = self.__client.get('/v1/account/accounts/%s/balance' % self.__accountid)
         acc = hbAccountBalance(self.__coinType, balances)
-        print('--getAccountBalance: usdt:%s coin:%s'%(acc.getCash(), acc.getCoin()))
+        logger.info('getAccountBalance: usdt:%s coin:%s'%(acc.getCash(), acc.getCoin()))
         return hbTradeAccountBalance({'usdt':acc.getCash(), 'coin':acc.getCoin()})
 
     # --
     #@exceDebug
     def getOpenOrders(self):
-        print('--getOpenOrders:')
+        logger.info('getOpenOrders:')
         return []
         '''
         return [hbTradeOrder({
@@ -146,14 +149,14 @@ class hbTradeClient(TradeClientBase):
     # --
     #@exceDebug
     def cancelOrder(self, orderId):
-        print('--cancelOrder:%s'%orderId)
+        logger.info('cancelOrder:%s'%orderId)
         self.__client.post('/v1/order/orders/%s/submitcancel' % orderId)
         self.checkOrderState(orderId, [hbOrderState.OrderCanceled, hbOrderState.OrderFilled])
 
     # --
     #@exceDebug
     def buyLimit(self, limitPrice, quantity):
-        print('--buyLimit:%s %s'%(limitPrice, quantity))
+        logger.info('buyLimit:%s %s'%(limitPrice, quantity))
         orderInfo = self.postOrder(limitPrice, quantity, hbOrderType.BuyLimit)
         return hbTradeOrder(orderInfo)
 
@@ -161,7 +164,7 @@ class hbTradeClient(TradeClientBase):
     #@exceDebug
     def sellLimit(self, limitPrice, quantity):
         quantity *= 0.998
-        print('--sellLimit:%s %s'%(limitPrice, quantity))
+        logger.info('sellLimit:%s %s'%(limitPrice, quantity))
         orderInfo = self.postOrder(limitPrice, quantity, hbOrderType.SellLimit)
         return hbTradeOrder(orderInfo)
 
@@ -169,7 +172,7 @@ class hbTradeClient(TradeClientBase):
     #@exceDebug
     def getUserTransactions(self, ordersId):
         if len(ordersId):
-            print('--getUserTransactions:%s'%ordersId)
+            logger.info('getUserTransactions:%s'%ordersId)
         ret = []
         for oid in ordersId:
             orderInfo = self.__client.get('/v1/order/orders/%s' % oid)

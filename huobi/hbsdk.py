@@ -93,7 +93,6 @@ class ApiClient(object):
 
     def _call(self, method, uri, data=None):
         url = '%s://%s%s' % (SCHEME, self._host, uri)
-        #print(method + ' ' + url)
         headers = DEFAULT_GET_HEADERS if method=='GET' else DEFAULT_POST_HEADERS
         if self._assetPassword:
             headers['AuthData'] = self._auth_data()
@@ -127,10 +126,8 @@ class ApiClient(object):
         qs = '&'.join(['%s=%s' % (key, self._encode(params[key])) for key in keys])
         # build payload:
         payload = '%s\n%s\n%s\n%s' % (method, self._host, path, qs)
-        # print('payload:\n%s' % payload)
         dig = hmac.new(self._accessKeySecret, msg=payload.encode('utf-8'), digestmod=hashlib.sha256).digest()
         sig = self._encode(base64.b64encode(dig).decode())
-        # print('sign: ' + sig)
         qs = qs + '&Signature=' + sig
         return qs
 

@@ -27,13 +27,13 @@ from pyalgotrade import bar
 from pyalgotrade import barfeed
 from pyalgotrade import dataseries
 from pyalgotrade import resamplebase
-import pyalgotrade.logger
 from pyalgotrade.utils import dt
 import commonApi as api
 import liveUtils
+import liveLogger
 
 
-logger = pyalgotrade.logger.getLogger("xignite")
+logger = liveLogger.getLiveLogger("Barfeed")
 
 
 class liveBar(bar.BasicBar):
@@ -52,7 +52,7 @@ class PollingThread(threading.Thread):
         # Wait until getNextCallDateTime checking for cancelation every 0.5 second.
         nextCall = self.getNextCallDateTime()
 #        nextCall = self.getNextCallDateTime() - datetime.timedelta(seconds=3600)
-        print("----nextTime:%s"%liveUtils.utcToLocal(nextCall))
+        logger.info("----nextTime:%s"%liveUtils.utcToLocal(nextCall))
         while not self.__stopped and liveUtils.utcnow() < nextCall:
             time.sleep(0.5)
 
