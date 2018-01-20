@@ -20,11 +20,15 @@ def localTime():
 def utcToLocal(utcDatetime):
     return timestamp_to_DateTimeLocal(dt.datetime_to_timestamp(utcDatetime))
 
+def RoundDown(f, n):
+    r = round(f, n)
+    return r if r <= f else r - (10**-n)
+
 def PriceRound(price):
-    return round(price, 2)
+    return RoundDown(price, 2)
 
 def CoinRound(coin):
-    return round(coin, 4)
+    return RoundDown(coin, 4)
 
 
 import traceback
