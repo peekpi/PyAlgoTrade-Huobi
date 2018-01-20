@@ -212,7 +212,7 @@ class LiveBroker(broker.Broker):
                 avgPrice = order.getAvgFillPrice()
                 newQuantity = trade.getBTC() - filled
                 if order.isBuy():
-                    newQuantity -= trade.getFee())
+                    newQuantity -= trade.getFee()
                 newQuantity = liveUtils.CoinRound(newQuantity)
                 if newQuantity == 0:
                     continue
